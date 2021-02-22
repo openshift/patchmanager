@@ -14,7 +14,7 @@ Complete implementation and details can be found in `pkg/classifier` package.
 
 Each classifier can be configured via `config.yaml` file:
 
-Example:
+#### Example config.yaml:
 
 ```yaml
 capacity:
