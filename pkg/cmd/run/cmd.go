@@ -27,7 +27,9 @@ type runOptions struct {
 	release        string
 	outFile        string
 
-	capacity int
+	capacity           int
+	capacityConfigFile string
+	capacityConfig     *v1.CapacityConfig
 
 	classifier classifier.Classifier
 }
@@ -59,7 +61,8 @@ func (r *runOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.githubToken, "github-token", "", "Github Access Token (GITHUB_TOKEN env variable)")
 	fs.StringVar(&r.bugzillaAPIKey, "bugzilla-apikey", "", "Bugzilla API Key (BUGZILLA_APIKEY env variable)")
 	fs.StringVar(&r.release, "release", "", "Target release (eg. 4.6, 4.7, etc...)")
-	fs.IntVar(&r.capacity, "capacity", 10, "Set the target capacity for pick decision")
+	fs.StringVar(&r.capacityConfigFile, "capacity-config", "", "Read capacity from config file")
+	fs.IntVar(&r.capacity, "capacity", 10, "Set the default capacity to approve if config file is not used or default capacity is not set")
 	fs.StringVarP(&r.outFile, "output", "o", "", "Set output file instead of standard output")
 }
 
@@ -73,6 +76,9 @@ func (r *runOptions) Validate() error {
 	if len(r.release) == 0 {
 		return fmt.Errorf("release flag must be set")
 	}
+	if r.capacity <= 0 {
+		return fmt.Errorf("capacity must be above 0")
+	}
 	return nil
 }
 
@@ -82,6 +88,21 @@ func (r *runOptions) Complete() error {
 	}
 	if len(r.githubToken) == 0 {
 		r.githubToken = os.Getenv("GITHUB_TOKEN")
+	}
+	if len(r.capacityConfigFile) > 0 {
+		var err error
+		r.capacityConfig, err = api.ReadCapacityConfig(r.capacityConfigFile)
+		if err != nil {
+			return err
+		}
+		// if default capacity is not set, use default from command line
+		if r.capacityConfig.DefaultCapacity == 0 {
+			r.capacityConfig.DefaultCapacity = r.capacity
+		}
+		// allow to override the default capacity config from command line
+		if r.capacity != r.capacityConfig.DefaultCapacity {
+			r.capacityConfig.DefaultCapacity = r.capacity
+		}
 	}
 
 	r.classifier = classifier.New(
@@ -93,11 +114,36 @@ func (r *runOptions) Complete() error {
 	return nil
 }
 
+type capacityTracker struct {
+	config   *v1.CapacityConfig
+	capacity map[string]int
+}
+
+func (c capacityTracker) hasCapacity(component string) bool {
+	current, ok := c.capacity[component]
+	if !ok {
+		c.capacity[component] = c.config.DefaultCapacity - 1
+		return true
+	}
+	if current <= api.ComponentCapacity(c.config, component) {
+		c.capacity[component] = c.capacity[component] - 1
+		return true
+	}
+	return false
+}
+
 func (r *runOptions) Run(ctx context.Context) error {
 	pendingPullRequests, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListForRelease(ctx, r.release)
 	if err != nil {
 		return err
 	}
+
+	if capacity := len(r.capacityConfig.Components); capacity > 0 {
+		klog.Infof("Capacity configuration for %d components loaded (default capacity: %d)", capacity, r.capacityConfig.DefaultCapacity)
+	} else {
+		klog.Infof("Using default capacity %d", r.capacity)
+	}
+
 	klog.Infof("Wait to finish processing %d cherry-pick-approve pull requests ...", len(pendingPullRequests))
 
 	for i := range pendingPullRequests {
@@ -108,11 +154,15 @@ func (r *runOptions) Run(ctx context.Context) error {
 		return pendingPullRequests[i].Score > pendingPullRequests[j].Score
 	})
 
-	candidates := []v1.Candidate{}
-	decision := "pick"
+	capacity := &capacityTracker{
+		config:   r.capacityConfig,
+		capacity: map[string]int{},
+	}
 
-	for i, p := range pendingPullRequests {
-		if i >= r.capacity {
+	candidates := []v1.Candidate{}
+	for _, p := range pendingPullRequests {
+		decision := "pick"
+		if !capacity.hasCapacity(strings.Join(p.Bug().Component, "/")) {
 			decision = "skip"
 		}
 		candidates = append(candidates, v1.Candidate{
