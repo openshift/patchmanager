@@ -12,7 +12,8 @@ Triage is done via scoring system where each pull request is being classified by
 
 Complete implementation and details can be found in `pkg/classifier` package.
 
-Each classifier can be configured via `config.yaml` file:
+Each classifier can be configured via `config.yaml` file. Most of them assign "score" to each pull request. The score is additive, so in the example
+below, an "urgent" bug with *TestBlocker* flag will get score `1.8` which will likely put it at the top of the list.
 
 #### Example config.yaml:
 
