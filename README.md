@@ -12,6 +12,21 @@ Triage is done via scoring system where each pull request is being classified by
 
 Complete implementation and details can be found in `pkg/classifier` package.
 
+In addition, this tool implements per-component capacity planning, where each individual component can define maximum capacity for pull requests
+that should be picked. This is defined in a YAML config:
+
+```yaml
+default-capacity: 10
+components:
+  - name: Networking
+    capacity: 2
+  - name: kube-apiserver
+    capacity: 5
+```
+
+Using the above config, only 2 pull requests for *Networking* component will be approved and only 5 pull requests for *kube-apiserver* bugzilla
+component will be picked.
+
 ## Installation
 
 To install this command, simple `go install github.com/mfojtik/patch-manager/cmd/patchmanager` should be sufficient.
