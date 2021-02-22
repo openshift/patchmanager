@@ -5,6 +5,12 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
+
+	"github.com/mfojtik/patchmanager/pkg/api"
+	"gopkg.in/yaml.v2"
+
+	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
 
 	"github.com/mfojtik/patchmanager/pkg/classifier"
 	"github.com/mfojtik/patchmanager/pkg/github"
@@ -19,6 +25,9 @@ type runOptions struct {
 	bugzillaAPIKey string
 	githubToken    string
 	release        string
+	outFile        string
+
+	capacity int
 
 	classifier classifier.Classifier
 }
@@ -50,6 +59,8 @@ func (r *runOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.githubToken, "github-token", "", "Github Access Token (GITHUB_TOKEN env variable)")
 	fs.StringVar(&r.bugzillaAPIKey, "bugzilla-apikey", "", "Bugzilla API Key (BUGZILLA_APIKEY env variable)")
 	fs.StringVar(&r.release, "release", "", "Target release (eg. 4.6, 4.7, etc...)")
+	fs.IntVar(&r.capacity, "capacity", 10, "Set the target capacity for pick decision")
+	fs.StringVarP(&r.outFile, "output", "o", "", "Set output file instead of standard output")
 }
 
 func (r *runOptions) Validate() error {
@@ -87,8 +98,7 @@ func (r *runOptions) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	klog.Infof("Processing %d cherry-pick pending pull requests ...", len(pendingPullRequests))
+	klog.Infof("Wait to finish processing %d cherry-pick-approve pull requests ...", len(pendingPullRequests))
 
 	for i := range pendingPullRequests {
 		pendingPullRequests[i].Score = r.classifier.Score(pendingPullRequests[i])
@@ -98,16 +108,41 @@ func (r *runOptions) Run(ctx context.Context) error {
 		return pendingPullRequests[i].Score > pendingPullRequests[j].Score
 	})
 
-	trim := func(in string) string {
-		if len(in) > 150 {
-			return in[0:150] + "... "
+	candidates := []v1.Candidate{}
+	decision := "pick"
+
+	for i, p := range pendingPullRequests {
+		if i >= r.capacity {
+			decision = "skip"
 		}
-		return in
+		candidates = append(candidates, v1.Candidate{
+			PMScore:        p.Bug().PMScore,
+			Score:          p.Score,
+			Description:    p.Bug().Summary,
+			PullRequestURL: p.Issue.GetHTMLURL(),
+			BugNumber:      fmt.Sprintf("%d", p.Bug().ID),
+			Component:      strings.Join(p.Bug().Component, "/"),
+			Severity:       p.Bug().Severity,
+			Decision:       decision,
+		})
 	}
 
-	for _, p := range pendingPullRequests {
-		fmt.Printf("[%.1f][%-6s][%s] %s\n", p.Score, p.Bug().Severity, p.Issue.GetHTMLURL(), trim(p.Issue.GetTitle()))
+	out, err := yaml.Marshal(api.NewCandidateList(candidates))
+	if err != nil {
+		return err
 	}
 
-	return nil
+	output := os.Stdout
+	if len(r.outFile) > 0 {
+		output, err = os.OpenFile(r.outFile, os.O_CREATE|os.O_WRONLY, 0666)
+		if err != nil {
+			return err
+		}
+	}
+
+	if _, err = fmt.Fprintf(output, "%s\n", string(out)); err != nil {
+		return err
+	}
+
+	return output.Sync()
 }

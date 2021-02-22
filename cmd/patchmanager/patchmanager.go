@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/mfojtik/patchmanager/pkg/cmd/approve"
+
 	"github.com/mfojtik/patchmanager/pkg/cmd/run"
 
 	"github.com/spf13/cobra"
@@ -41,6 +43,7 @@ func NewPatchManagerCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.AddCommand(run.NewRunCommand(ctx))
+	cmd.AddCommand(approve.NewApproveCommand(ctx))
 
 	return cmd
 }

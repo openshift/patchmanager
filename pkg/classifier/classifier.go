@@ -70,7 +70,7 @@ func (f *FlagsClassifier) Score(pullRequest *github.PullRequest) float32 {
 		switch f.Name {
 		case "TestBlocker":
 			return 0.9
-		case "UpgradeBlocker":
+		case "UpgradeBlocker", "Security":
 			return 1
 		default:
 			continue
@@ -92,7 +92,7 @@ func (p *ProductManagementScoreClassifier) Score(pullRequest *github.PullRequest
 		return 0.7
 	case pmScore >= 50:
 		return 0.5
-	case pmScore < 50 && pmScore > 30:
+	case pmScore >= 30:
 		return 0.2
 	default:
 		return 0
