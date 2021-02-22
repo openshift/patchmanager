@@ -75,7 +75,7 @@ In case you want to contribute, you can use *Makefile* to build the patchmanager
 
 ## Usage
 
-* `patchmanager run --release=4.x --capacity=N -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
+1. `patchmanager run --release=4.x --config=path/to/config.yaml -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
   and scored based on the classifiers. The `capacity` flag will cause that on *N* pull requests will be "picked".
   
 *Example YAML file:*
@@ -114,7 +114,6 @@ items:
     decisionReason: target capacity for component Networking is 2
 ```
 
-* A human patch manager need to review this YAML file and make decisions on individual changes. Decision can be either **pick** or **skip**.
-
-* Once you are done editing YAML file, you can run the `patchmanager approve -f candidates.yaml` command which will apply the `cherry-pick-approved` label
+2. A human patch manager need to review this YAML file and make decisions on individual changes. Decision can be either **pick** or **skip**.
+3. Once you are done editing YAML file, you can run the `patchmanager approve -f candidates.yaml` command which will apply the `cherry-pick-approved` label
   on ALL pull requests with "pick" decision.
