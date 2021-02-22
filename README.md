@@ -56,9 +56,9 @@ items:
     # Component: Machine Config Operator
     # Severity: high
     # PM Score 52
-    # Score: 1.00
     url: https://github.com/openshift/machine-config-operator/pull/2419
     decision: pick
+    score: 1.0
 - pullRequest:
     # Description: 4.7 to 4.6 downgrade fails due to 4.7 Cluster Profile Support manifest
     # changes
@@ -66,10 +66,19 @@ items:
     # Component: Cluster Version Operator
     # Severity: medium
     # PM Score 77
-    # Score: 0.70
     url: https://github.com/openshift/cluster-version-operator/pull/512
     decision: pick
-
+    score: 0.7
+- pullRequest:
+    # Description: [Kuryr] Available port count not correctly calculated for alerts
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1897526
+    # Component: Networking
+    # Severity: low
+    # PM Score 0
+    url: https://github.com/openshift/cluster-network-operator/pull/907
+    decision: skip
+    score: 0.6
+    decisionReason: target capacity for component Networking is 2
 ```
 
 * A human patch manager need to review this YAML file and make decisions on individual changes. Decision can be either **pick** or **skip**.
