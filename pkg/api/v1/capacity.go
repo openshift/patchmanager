@@ -5,7 +5,7 @@ type CapacityConfig struct {
 	Components []ComponentCapacity `yaml:"components"`
 
 	// DefaultCapacity is capacity used when there is no capacity defined for given component
-	DefaultCapacity int `yaml:"default-capacity"`
+	DefaultCapacity int `yaml:"default"`
 }
 
 type ComponentCapacity struct {

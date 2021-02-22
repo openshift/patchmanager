@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -27,9 +28,9 @@ type runOptions struct {
 	release        string
 	outFile        string
 
-	capacity           int
-	capacityConfigFile string
-	capacityConfig     *v1.CapacityConfig
+	capacity   int
+	configFile string
+	config     *v1.PatchManagerConfig
 
 	classifier classifier.Classifier
 }
@@ -61,7 +62,7 @@ func (r *runOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.githubToken, "github-token", "", "Github Access Token (GITHUB_TOKEN env variable)")
 	fs.StringVar(&r.bugzillaAPIKey, "bugzilla-apikey", "", "Bugzilla API Key (BUGZILLA_APIKEY env variable)")
 	fs.StringVar(&r.release, "release", "", "Target release (eg. 4.6, 4.7, etc...)")
-	fs.StringVar(&r.capacityConfigFile, "capacity-config", "", "Read capacity from config file")
+	fs.StringVar(&r.configFile, "config", "", "Path to a config file")
 	fs.IntVar(&r.capacity, "capacity", 10, "Set the default capacity to approve if config file is not used or default capacity is not set")
 	fs.StringVarP(&r.outFile, "output", "o", "", "Set output file instead of standard output")
 }
@@ -79,6 +80,9 @@ func (r *runOptions) Validate() error {
 	if r.capacity <= 0 {
 		return fmt.Errorf("capacity must be above 0")
 	}
+	if len(r.configFile) == 0 {
+		return fmt.Errorf("need to specify valid config file")
+	}
 	return nil
 }
 
@@ -89,27 +93,22 @@ func (r *runOptions) Complete() error {
 	if len(r.githubToken) == 0 {
 		r.githubToken = os.Getenv("GITHUB_TOKEN")
 	}
-	if len(r.capacityConfigFile) > 0 {
-		var err error
-		r.capacityConfig, err = api.ReadCapacityConfig(r.capacityConfigFile)
-		if err != nil {
-			return err
-		}
-		// if default capacity is not set, use default from command line
-		if r.capacityConfig.DefaultCapacity == 0 {
-			r.capacityConfig.DefaultCapacity = r.capacity
-		}
-		// allow to override the default capacity config from command line
-		if r.capacity != r.capacityConfig.DefaultCapacity {
-			r.capacityConfig.DefaultCapacity = r.capacity
-		}
+
+	configBytes, err := ioutil.ReadFile(r.configFile)
+	if err != nil {
+		return err
+	}
+
+	r.config = &v1.PatchManagerConfig{}
+	if err := yaml.Unmarshal(configBytes, r.config); err != nil {
+		return err
 	}
 
 	r.classifier = classifier.New(
-		&classifier.SeverityClassifier{},
-		&classifier.ComponentClassifier{},
-		&classifier.FlagsClassifier{},
-		&classifier.ProductManagementScoreClassifier{},
+		&classifier.SeverityClassifier{Config: &r.config.ClassifiersConfigs.Severities},
+		&classifier.ComponentClassifier{Config: &r.config.ClassifiersConfigs.ComponentClassifier},
+		&classifier.FlagsClassifier{Config: &r.config.ClassifiersConfigs.FlagsClassifier},
+		&classifier.ProductManagementScoreClassifier{Config: &r.config.ClassifiersConfigs.PMScores},
 	)
 	return nil
 }
@@ -138,8 +137,8 @@ func (r *runOptions) Run(ctx context.Context) error {
 		return err
 	}
 
-	if capacity := len(r.capacityConfig.Components); capacity > 0 {
-		klog.Infof("Capacity configuration for %d components loaded (default capacity: %d)", capacity, r.capacityConfig.DefaultCapacity)
+	if capacity := len(r.config.CapacityConfig.Components); capacity > 0 {
+		klog.Infof("Capacity configuration for %d components loaded (default capacity: %d)", capacity, r.config.CapacityConfig.DefaultCapacity)
 	} else {
 		klog.Infof("Using default capacity %d", r.capacity)
 	}
@@ -155,7 +154,7 @@ func (r *runOptions) Run(ctx context.Context) error {
 	})
 
 	capacity := &capacityTracker{
-		config:   r.capacityConfig,
+		config:   &r.config.CapacityConfig,
 		capacity: map[string]int{},
 	}
 
@@ -165,7 +164,7 @@ func (r *runOptions) Run(ctx context.Context) error {
 		decisionReason := ""
 		if !capacity.hasCapacity(strings.Join(p.Bug().Component, "/")) {
 			decision = "skip"
-			decisionReason = fmt.Sprintf("target capacity for component %s is %d", strings.Join(p.Bug().Component, "/"), api.ComponentCapacity(r.capacityConfig, strings.Join(p.Bug().Component, "/")))
+			decisionReason = fmt.Sprintf("target capacity for component %s is %d", strings.Join(p.Bug().Component, "/"), api.ComponentCapacity(&r.config.CapacityConfig, strings.Join(p.Bug().Component, "/")))
 		}
 		candidates = append(candidates, v1.Candidate{
 			PMScore:        p.Bug().PMScore,

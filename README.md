@@ -12,17 +12,49 @@ Triage is done via scoring system where each pull request is being classified by
 
 Complete implementation and details can be found in `pkg/classifier` package.
 
-In addition, this tool implements per-component capacity planning, where each individual component can define maximum capacity for pull requests
-that should be picked. This is defined in a YAML config:
+Each classifier can be configured via `config.yaml` file:
+
+Example:
 
 ```yaml
-default-capacity: 10
-components:
-  - name: Networking
-    capacity: 2
-  - name: kube-apiserver
-    capacity: 5
+capacity:
+  default: 5
+  components:
+    - name: Networking
+      capacity: 10
+    - name: kube-apiserver
+      capacity: 10
+classifiers:
+  flags:
+    "TestBlocker": 0.8
+    "UpgradeBlocker": 0.8
+    "Security": 0.5
+  components:
+    "authentication": 0.5
+    "networking": 0.5
+    "node": 0.5
+    "kube-apiserver": 0.5
+  severities:
+    "urgent": 1.0
+    "high": 0.5
+    "medium": 0.2
+    "low": 0.1
+    "unknown": -1.0
+  pmScores:
+    - from: 0
+      to: 30
+      score: 0
+    - from: 30
+      to: 50
+      score: 0.2
+    - from: 50
+      to: 100
+      score: 0.5
+    - from: 100
+      to: 999
+      score: 0.8
 ```
+
 
 Using the above config, only 2 pull requests for *Networking* component will be approved and only 5 pull requests for *kube-apiserver* bugzilla
 component will be picked.

@@ -1,0 +1,37 @@
+---
+capacity:
+  default: 5
+  components:
+    - name: Networking
+      capacity: 10
+    - name: kube-apiserver
+      capacity: 10
+classifiers:
+  flags:
+    "TestBlocker": 0.8
+    "UpgradeBlocker": 0.8
+    "Security": 0.5
+  components:
+    "authentication": 0.5
+    "networking": 0.5
+    "node": 0.5
+    "kube-apiserver": 0.5
+  severities:
+    "urgent": 1.0
+    "high": 0.5
+    "medium": 0.2
+    "low": 0.1
+    "unknown": -1.0
+  pmScores:
+    - from: 0
+      to: 30
+      score: 0
+    - from: 30
+      to: 50
+      score: 0.2
+    - from: 50
+      to: 100
+      score: 0.5
+    - from: 100
+      to: 999
+      score: 0.8

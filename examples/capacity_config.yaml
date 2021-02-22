@@ -1,6 +1,0 @@
-default-capacity: 10
-components:
-  - name: Networking
-    capacity: 2
-  - name: kube-apiserver
-    capacity: 5
