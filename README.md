@@ -20,6 +20,11 @@ To install this command, simple `go install github.com/mfojtik/patch-manager/cmd
 
 In case you want to contribute, you can use *Makefile* to build the patchmanager binary by running `make`.
 
+## Pre-requirements
+
+* You will need [Github Personal Token](https://github.com/settings/tokens) exported via environment variable `GITHUB_TOKEN` (or use command flag).
+* You will need [Bugzilla API Token](https://bugzilla.redhat.com/userprefs.cgi?tab=apikey) exported via environment variable `BUGZILLA_APIKEY` (or use command flag).
+
 ## Usage
 
 * `patchmanager run --release=4.x --capacity=N -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
