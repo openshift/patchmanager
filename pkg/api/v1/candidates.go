@@ -14,6 +14,7 @@ type Candidate struct {
 	yaml.CommentedMapSlice `yaml:"pullRequest"`
 
 	Decision       string  `yaml:"-"`
+	DecisionReason string  `yaml:"-"`
 	PMScore        string  `yaml:"-"`
 	Score          float32 `yaml:"-"`
 	Description    string  `yaml:"-"`

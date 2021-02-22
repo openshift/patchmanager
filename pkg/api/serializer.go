@@ -21,13 +21,20 @@ Bug: %s
 Component: %s
 Severity: %s
 PM Score %s
-Score: %.2f
-`, sanitizeSummary(candidates[i].Description), fmt.Sprintf("https://bugzilla.redhat.com/show_bug.cgi?id=%s", candidates[i].BugNumber), candidates[i].Component, candidates[i].Severity, candidates[i].PMScore, candidates[i].Score),
+`, sanitizeSummary(candidates[i].Description), fmt.Sprintf("https://bugzilla.redhat.com/show_bug.cgi?id=%s", candidates[i].BugNumber), candidates[i].Component, candidates[i].Severity, candidates[i].PMScore),
 				},
 				{
 					MapItem: yaml.MapItem{Key: "decision", Value: candidates[i].Decision},
 				},
+				{
+					MapItem: yaml.MapItem{Key: "score", Value: candidates[i].Score},
+				},
 			},
+		}
+		if len(candidates[i].DecisionReason) > 0 {
+			items[i].CommentedMapSlice = append(items[i].CommentedMapSlice, yaml.CommentedMapItem{
+				MapItem: yaml.MapItem{Key: "decisionReason", Value: candidates[i].DecisionReason},
+			})
 		}
 	}
 	return v1.CandidateList{items}

@@ -162,8 +162,10 @@ func (r *runOptions) Run(ctx context.Context) error {
 	candidates := []v1.Candidate{}
 	for _, p := range pendingPullRequests {
 		decision := "pick"
+		decisionReason := ""
 		if !capacity.hasCapacity(strings.Join(p.Bug().Component, "/")) {
 			decision = "skip"
+			decisionReason = fmt.Sprintf("target capacity for component %s is %d", strings.Join(p.Bug().Component, "/"), api.ComponentCapacity(r.capacityConfig, strings.Join(p.Bug().Component, "/")))
 		}
 		candidates = append(candidates, v1.Candidate{
 			PMScore:        p.Bug().PMScore,
@@ -174,6 +176,7 @@ func (r *runOptions) Run(ctx context.Context) error {
 			Component:      strings.Join(p.Bug().Component, "/"),
 			Severity:       p.Bug().Severity,
 			Decision:       decision,
+			DecisionReason: decisionReason,
 		})
 	}
 
