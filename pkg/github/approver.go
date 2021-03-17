@@ -30,10 +30,10 @@ func (p *PullRequestApprover) CherryPickApprove(ctx context.Context, url string)
 
 func parsePullRequestMeta(u string) (string, string, int, error) {
 	parts := strings.Split(strings.TrimPrefix(u, "https://github.com/"), "/")
-	if len(parts) != 3 {
+	if len(parts) != 4 {
 		return "", "", 0, fmt.Errorf("unable to parse pull request url %q", u)
 	}
-	number, err := strconv.Atoi(parts[2])
+	number, err := strconv.Atoi(parts[3])
 	if err != nil {
 		return "", "", 0, err
 	}
