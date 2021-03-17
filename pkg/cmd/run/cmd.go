@@ -137,7 +137,7 @@ func (r *runOptions) Run(ctx context.Context) error {
 		return err
 	}
 
-	if capacity := len(r.config.CapacityConfig.Components); capacity > 0 {
+	if capacity := len(r.config.CapacityConfig.Groups); capacity > 0 {
 		klog.Infof("Capacity configuration for %d components loaded (default capacity: %d)", capacity, r.config.CapacityConfig.DefaultCapacity)
 	} else {
 		klog.Infof("Using default capacity %d", r.capacity)

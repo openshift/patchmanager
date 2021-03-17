@@ -1,11 +1,35 @@
 ---
+# MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
+mergeWindow:
+  from:
+  to:
+# Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   default: 5
-  components:
-    - name: Networking
-      capacity: 10
-    - name: kube-apiserver
-      capacity: 10
+  groups:
+    - name: API&Auth
+      capacity: 5
+      components:
+      - Master
+      - apiserver-auth
+      - authentication
+      - service-ca
+      - openshift-apiserver
+      - oauth-apiserver
+      - kube-apiserver
+      - oauth-proxy
+      - kube-storage-version-migrator
+      - config-operator
+    - name: Workloads
+      capacity: 5
+      components:
+      - Deployments
+      - Command Line Interface
+      - oc
+      - kube-controller-manager
+      - kube-scheduler
+# Classifiers describe how much score points a single pull request should get. (0-1)
+# Score impact the position of a PR in merge queue.
 classifiers:
   flags:
     "TestBlocker": 0.8
