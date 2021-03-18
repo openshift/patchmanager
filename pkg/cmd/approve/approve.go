@@ -28,7 +28,8 @@ type approveOptions struct {
 func NewApproveCommand(ctx context.Context) *cobra.Command {
 	runOpts := approveOptions{}
 	cmd := &cobra.Command{
-		Use: "approve",
+		Use:   "approve",
+		Short: "Apply cherry-pick-approved label on pull request with 'pick' decision",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runOpts.Complete(); err != nil {
 				klog.Exit(err)

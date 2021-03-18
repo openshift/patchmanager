@@ -8,12 +8,14 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mfojtik/patchmanager/pkg/scoring"
+
 	"github.com/mfojtik/patchmanager/pkg/api"
+	"github.com/mfojtik/patchmanager/pkg/classifiers"
 	"gopkg.in/yaml.v2"
 
 	"github.com/cheggaaa/pb/v3"
 	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
-	"github.com/mfojtik/patchmanager/pkg/classifier"
 	"github.com/mfojtik/patchmanager/pkg/github"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -31,14 +33,15 @@ type runOptions struct {
 	configFile string
 	config     *v1.PatchManagerConfig
 
-	classifier classifier.Classifier
+	classifier classifiers.Classifier
 }
 
 // NewRunCommand creates a render command.
 func NewRunCommand(ctx context.Context) *cobra.Command {
 	runOpts := runOptions{}
 	cmd := &cobra.Command{
-		Use: "run",
+		Use:   "run",
+		Short: "Run z-stream pull requests classification for given release",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runOpts.Complete(); err != nil {
 				klog.Exit(err)
@@ -103,11 +106,11 @@ func (r *runOptions) Complete() error {
 		return err
 	}
 
-	r.classifier = classifier.New(
-		&classifier.SeverityClassifier{Config: &r.config.ClassifiersConfigs.Severities},
-		&classifier.ComponentClassifier{Config: &r.config.ClassifiersConfigs.ComponentClassifier},
-		&classifier.FlagsClassifier{Config: &r.config.ClassifiersConfigs.FlagsClassifier},
-		&classifier.ProductManagementScoreClassifier{Config: &r.config.ClassifiersConfigs.PMScores},
+	r.classifier = classifiers.NewMultiClassifier(
+		&classifiers.SeverityClassifier{Config: &r.config.ClassifiersConfigs.Severities},
+		&classifiers.ComponentClassifier{Config: &r.config.ClassifiersConfigs.ComponentClassifier},
+		&classifiers.FlagsClassifier{Config: &r.config.ClassifiersConfigs.FlagsClassifier},
+		&classifiers.ProductManagementScoreClassifier{Config: &r.config.ClassifiersConfigs.PMScores},
 	)
 	return nil
 }
@@ -131,7 +134,7 @@ func (c capacityTracker) hasCapacity(component string) bool {
 }
 
 func (r *runOptions) Run(ctx context.Context) error {
-	pendingPullRequests, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListForRelease(ctx, r.release)
+	pullsToReview, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListForRelease(ctx, r.release)
 	if err != nil {
 		return err
 	}
@@ -142,22 +145,24 @@ func (r *runOptions) Run(ctx context.Context) error {
 		klog.Infof("Maximum pulls to pick is set to %d", r.maxPicks)
 	}
 
-	klog.Infof("Wait to finish processing %d cherry-pick-approve pull requests ...", len(pendingPullRequests))
+	klog.Infof("Wait to finish processing %d cherry-pick-approve pull requests ...", len(pullsToReview))
 
-	bar := pb.StartNew(len(pendingPullRequests))
-	pool := classifier.NewScoringWorkerPool(r.classifier).WithCallback(func(interface{}) {
-		bar.Increment()
+	// assign score to each pull request by running it trough set of classifiers
+	progress := pb.StartNew(len(pullsToReview))
+	pool := scoring.NewWorkerPool(r.classifier).WithCallback(func(interface{}) {
+		progress.Increment()
 	})
-	if err := pool.Add(pendingPullRequests...); err != nil {
+	if err := pool.Add(pullsToReview...); err != nil {
 		return err
 	}
 	if err := pool.WaitForFinish(); err != nil {
 		return err
 	}
-	bar.Finish()
+	progress.Finish()
 
-	sort.Slice(pendingPullRequests, func(i, j int) bool {
-		return pendingPullRequests[i].Score > pendingPullRequests[j].Score
+	// order the pending pull requests by score
+	sort.Slice(pullsToReview, func(i, j int) bool {
+		return pullsToReview[i].Score > pullsToReview[j].Score
 	})
 
 	capacity := &capacityTracker{
@@ -165,9 +170,10 @@ func (r *runOptions) Run(ctx context.Context) error {
 		capacity: map[string]int{},
 	}
 
+	// decide which pull requests we are going to pick based on the capacity
 	candidates := []v1.Candidate{}
 	totalPicks := 0
-	for _, p := range pendingPullRequests {
+	for _, p := range pullsToReview {
 		decision := "pick"
 		decisionReason := ""
 		if !capacity.hasCapacity(strings.Join(p.Bug().Component, "/")) {

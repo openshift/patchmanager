@@ -1,33 +1,34 @@
-package classifier
+package scoring
 
 import (
 	"github.com/enriquebris/goworkerpool"
+	"github.com/mfojtik/patchmanager/pkg/classifiers"
 	"github.com/mfojtik/patchmanager/pkg/github"
 )
 
-type ScoringPool interface {
-	WithCallback(func(interface{})) ScoringPool
+type Pool interface {
+	WithCallback(func(interface{})) Pool
 	WaitForFinish() error
 	Add(...*github.PullRequest) error
 }
 
 type scoringPool struct {
-	classifier Classifier
+	classifier classifiers.Classifier
 	pool       *goworkerpool.Pool
 	callback   func(interface{})
 }
 
-var _ ScoringPool = &scoringPool{}
+var _ Pool = &scoringPool{}
 
-// NewScoringWorkerPool return a worker pool for given classifier that is able to score multiple pull request in parallel (with reasonable concurency).
+// NewWorkerPool return a worker pool for given classifier that is able to score multiple pull request in parallel (with reasonable concurency).
 // This speed up scoring pull requests as requests to bugzilla can be slow.
-func NewScoringWorkerPool(classifier Classifier) ScoringPool {
+func NewWorkerPool(classifier classifiers.Classifier) Pool {
 	pool, err := goworkerpool.NewPoolWithOptions(goworkerpool.PoolOptions{
 		TotalInitialWorkers:          3,
 		MaxWorkers:                   6,
 		MaxOperationsInQueue:         100,
 		WaitUntilInitialWorkersAreUp: true,
-		LogVerbose:                   true,
+		LogVerbose:                   false,
 	})
 	if err != nil {
 		panic(err)
@@ -48,7 +49,7 @@ func NewScoringWorkerPool(classifier Classifier) ScoringPool {
 	return &p
 }
 
-func (p *scoringPool) WithCallback(fn func(interface{})) ScoringPool {
+func (p *scoringPool) WithCallback(fn func(interface{})) Pool {
 	p.callback = fn
 	return p
 }

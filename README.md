@@ -18,29 +18,59 @@ below, an "urgent" bug with *TestBlocker* flag will get score `1.8` which will l
 #### Example config.yaml:
 
 ```yaml
+---
+# MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
+# TODO: This is not implemented yet.
+mergeWindow:
+  from:
+  to:
+# Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
-  default: 5
-  components:
-    - name: Networking
-      capacity: 10
-    - name: kube-apiserver
-      capacity: 10
+  default: 5 # <- this is a "default" capacity if no capacity is specified for a component
+  groups:
+    - name: API&Auth
+      capacity: 5 # <- this is the QE capacity for all components listed below
+      components:
+      - Master
+      - apiserver-auth
+      - authentication
+      - service-ca
+      - openshift-apiserver
+      - oauth-apiserver
+      - kube-apiserver
+      - oauth-proxy
+      - kube-storage-version-migrator
+      - config-operator
+    - name: Workloads
+      capacity: 5
+      components:
+      - Deployments
+      - Command Line Interface
+      - oc
+      - kube-controller-manager
+      - kube-scheduler
+# Classifiers describe how much score points a single pull request should get. (0-1)
+# Score impact the position of a PR in merge queue.
 classifiers:
+  # Flags classifier assign score based on bugzilla flags present in bug associated with pull request
   flags:
     "TestBlocker": 0.8
     "UpgradeBlocker": 0.8
     "Security": 0.5
+  # Components classifier assign score based on importance/criticality of components
   components:
     "authentication": 0.5
     "networking": 0.5
     "node": 0.5
     "kube-apiserver": 0.5
+  # Severities classifier assign score based on bug Severity field
   severities:
     "urgent": 1.0
     "high": 0.5
     "medium": 0.2
     "low": 0.1
     "unknown": -1.0
+  # PMScores classifier assign score based on PMScore field ranges
   pmScores:
     - from: 0
       to: 30
@@ -115,5 +145,22 @@ items:
 ```
 
 2. A human patch manager need to review this YAML file and make decisions on individual changes. Decision can be either **pick** or **skip**.
+   
 3. Once you are done editing YAML file, you can run the `patchmanager approve -f candidates.yaml` command which will apply the `cherry-pick-approved` label
   on ALL pull requests with "pick" decision.
+   
+4. Alternatively, you can use `patchmanager list -f candidates.yaml` to format the pull requests in human readable table:
+
+```console
+$ patchmanager list -f candidates.yaml 
+  URL (35)                                                                              SCORE   DECISION   REASON                                                      
+ ------------------------------------------------------------------------------------- ------- ---------- ------------------------------------------------------------ 
+  https://github.com/openshift/ovn-kubernetes/pull/460                                   2.00   pick                                                                   
+  https://github.com/openshift/machine-config-operator/pull/2462                         1.50   pick                                                                   
+  https://github.com/openshift/machine-config-operator/pull/2426                         1.50   pick                                                                   
+  https://github.com/openshift/openshift-apiserver/pull/187                              1.00   pick                                                                   
+  https://github.com/openshift/cluster-ingress-operator/pull/570                         0.20   skip       maximum picks set by patch manager for this z-stream is 10  
+  https://github.com/openshift/origin/pull/25913                                         0.20   skip       maximum picks set by patch manager for this z-stream is 10  
+  https://github.com/operator-framework/operator-lifecycle-manager/pull/2036             0.20   skip       maximum picks set by patch manager for this z-stream is 10  
+  https://github.com/openshift/console-operator/pull/512                                 0.20   skip       maximum picks set by patch manager for this z-stream is 10  
+```

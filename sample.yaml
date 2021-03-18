@@ -1,0 +1,367 @@
+items:
+- pullRequest:
+    # Description: ovn-kube must handle single-stack to dual-stack migration
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1937829
+    # Component: Networking
+    # Severity: urgent
+    # PM Score 55
+    url: https://github.com/openshift/ovn-kubernetes/pull/460
+    decision: pick
+    score: 2
+- pullRequest:
+    # Description: The KubeletConfigController cannot process multiple confs for a
+    # pool/ pool changes
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1929257
+    # Component: Node
+    # Severity: high
+    # PM Score 55
+    url: https://github.com/openshift/machine-config-operator/pull/2462
+    decision: pick
+    score: 1.5
+- pullRequest:
+    # Description: NetworkManager overlay FS not being created on None platform
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1931863
+    # Component: Machine Config Operator
+    # Severity: urgent
+    # PM Score 100
+    url: https://github.com/openshift/machine-config-operator/pull/2426
+    decision: pick
+    score: 1.5
+- pullRequest:
+    # Description: [release-4.7] bump k8s.io/apiserver to 1.20.3
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1917904
+    # Component: openshift-apiserver
+    # Severity: high
+    # PM Score 55
+    url: https://github.com/openshift/openshift-apiserver/pull/187
+    decision: pick
+    score: 1
+- pullRequest:
+    # Description: [release-4.7] bump k8s.io/apiserver to 1.20.3
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1917904
+    # Component: openshift-apiserver
+    # Severity: high
+    # PM Score 55
+    url: https://github.com/openshift/oauth-apiserver/pull/43
+    decision: pick
+    score: 1
+- pullRequest:
+    # Description: cluster DNS experiencing disruptions during cluster upgrade in
+    # insights cluster
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1937089
+    # Component: DNS
+    # Severity: high
+    # PM Score 55
+    url: https://github.com/openshift/cluster-dns-operator/pull/247
+    decision: pick
+    score: 1
+- pullRequest:
+    # Description: Router HAProxy config file template is slow to render due to repetitive
+    # regex compilations
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1938921
+    # Component: Routing
+    # Severity: high
+    # PM Score 0
+    url: https://github.com/openshift/router/pull/269
+    decision: pick
+    score: 0.5
+- pullRequest:
+    # Description: [sig-instrumentation][Late] Alerts shouldn't report any alerts
+    # in firing state apart from Watchdog and AlertmanagerReceiversNotConfigured:
+    # Prometheus query error
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1938316
+    # Component: Multi-Arch
+    # Severity: medium
+    # PM Score 35
+    url: https://github.com/openshift/cluster-api-provider-libvirt/pull/219
+    decision: pick
+    score: 0.4
+- pullRequest:
+    # Description: CVE-2021-3121 ose-cluster-policy-controller-container: gogo/protobuf:
+    # plugin/unmarshal/unmarshal.go lacks certain index validation [openshift-4]
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1924496
+    # Component: kube-controller-manager
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-policy-controller/pull/58
+    decision: pick
+    score: 0.2
+- pullRequest:
+    # Description: Baremetal IPI - While deploying with IPv6 provision network with
+    # subnet other than /64 masters fail to PXE boot
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1933728
+    # Component: Installer
+    # Severity: medium
+    # PM Score 30
+    url: https://github.com/openshift/installer/pull/4698
+    decision: pick
+    score: 0.2
+- pullRequest:
+    # Description: Ingress operator performs spurious updates in response to API's
+    # defaulting of NodePort service's clusterIPs field
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1937214
+    # Component: Routing
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-ingress-operator/pull/570
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: LoadBalancer service check test fails during vsphere upgrade
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1931622
+    # Component: Routing
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/origin/pull/25913
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: [release-4.7] When deploying the operator via OLM (after creating
+    # the respective catalogsource), the deployment "lost" the `resources` section.
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1937375
+    # Component: OLM
+    # Severity: medium
+    # PM Score 30
+    url: https://github.com/operator-framework/operator-lifecycle-manager/pull/2036
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: console operator panics in DefaultDeployment with nil cm
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1936337
+    # Component: Management Console
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/console-operator/pull/512
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: (release-4.7) Authentication log gatherer shouldn't scan all the
+    # pod logs in the openshift-authentication namespace
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1936802
+    # Component: Insights Operator
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/openshift/insights-operator/pull/369
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: (release-4.7) Extend OLM operator gatherer to include Operator/ClusterServiceVersion
+    # conditions
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1935070
+    # Component: Insights Operator
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/openshift/insights-operator/pull/362
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: CVE-2021-3121 ose-cluster-kube-controller-manager-operator-container:
+    # gogo/protobuf: plugin/unmarshal/unmarshal.go lacks certain index validation
+    # [openshift-4]
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1924488
+    # Component: kube-controller-manager
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-kube-controller-manager-operator/pull/508
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: Items marked as mandatory in KMS Provider form are not enforced
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1932272
+    # Component: Console Storage Plugin
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/openshift/console/pull/8221
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: Reports that has specified a retention should not be requeued in
+    # the sync handler
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1929042
+    # Component: Metering Operator
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/kube-reporting/metering-operator/pull/1505
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: CVE-2021-3121 ose-cluster-kube-descheduler-operator-container:
+    # gogo/protobuf: plugin/unmarshal/unmarshal.go lacks certain index validation
+    # [openshift-4]
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1924489
+    # Component: kube-scheduler
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-kube-descheduler-operator/pull/173
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: CVE-2021-3121 ose-cluster-kube-scheduler-operator-container: gogo/protobuf:
+    # plugin/unmarshal/unmarshal.go lacks certain index validation [openshift-4]
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1924490
+    # Component: kube-scheduler
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-kube-scheduler-operator/pull/334
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: /usr/lib/dracut/modules.d/30ignition/ignition --version sigsev
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1933205
+    # Component: RHCOS
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/openshift/machine-config-operator/pull/2438
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: pipelinerun status icon rendering issue
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1935672
+    # Component: Dev Console
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/openshift/console/pull/8311
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: CVE-2021-3121 openshift-clients: gogo/protobuf: plugin/unmarshal/unmarshal.go
+    # lacks certain index validation [openshift-4]
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1924453
+    # Component: oc
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/oc/pull/753
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: NTO may fail to disable stalld when relying on Tuned '[service]'
+    # plugin
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1928614
+    # Component: Node Tuning Operator
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-node-tuning-operator/pull/215
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: ServiceAccount Registry Authfiles Do Not Contain Entries for Public
+    # Hostnames
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1931856
+    # Component: Image Registry
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/cluster-openshift-controller-manager-operator/pull/199
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: [e2e][automation] Fix pvc string in pvc.view
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1927198
+    # Component: Console Kubevirt Plugin
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/console/pull/8126
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: CVE-2021-3121 ose-metering-ansible-operator-container: gogo/protobuf:
+    # plugin/unmarshal/unmarshal.go lacks certain index validation [openshift-4]
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1924521
+    # Component: Metering Operator
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/kube-reporting/metering-operator/pull/1510
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: "Edit Annotation" are not correctly translated in Chinese
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1925792
+    # Component: Management Console
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/console/pull/8078
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: Performance: Console makes unnecessary requests for en-US messages
+    # on load
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1927311
+    # Component: Management Console
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/console/pull/8128
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: release-4.7: e2e: test OAuth API connections in the tests by that
+    # name
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1932806
+    # Component: oauth-apiserver
+    # Severity: medium
+    # PM Score 27
+    url: https://github.com/openshift/origin/pull/25894
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: Manually misspelled as Manualy
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1928151
+    # Component: Cloud Credential Operator
+    # Severity: medium
+    # PM Score 25
+    url: https://github.com/openshift/cloud-credential-operator/pull/301
+    decision: skip
+    score: 0.2
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: Pipelines shown in edit flow for Workloads created via ContainerImage
+    # flow
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1931382
+    # Component: Dev Console
+    # Severity: low
+    # PM Score 5
+    url: https://github.com/openshift/console/pull/8209
+    decision: skip
+    score: 0.1
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: Getting Forbidden for image in a container template when creating
+    # a sample app
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1933665
+    # Component: Dev Console
+    # Severity: low
+    # PM Score 5
+    url: https://github.com/openshift/console/pull/8255
+    decision: skip
+    score: 0.1
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+- pullRequest:
+    # Description: [Backport 4.7] Add memory and uptime metadata to IO archive
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1935605
+    # Component: Insights Operator
+    # Severity: low
+    # PM Score 0
+    url: https://github.com/openshift/insights-operator/pull/364
+    decision: skip
+    score: 0.1
+    decisionReason: maximum picks set by patch manager for this z-stream is 10
+

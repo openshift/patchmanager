@@ -29,6 +29,8 @@ type ApprovedCandidate struct {
 }
 
 type PullRequest struct {
-	URL      string `yaml:"url"`
-	Decision string `yaml:"decision"`
+	URL            string  `yaml:"url"`
+	Decision       string  `yaml:"decision"`
+	DecisionReason string  `yaml:"decisionReason"`
+	Score          float32 `yaml:"score"`
 }
