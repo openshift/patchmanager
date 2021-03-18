@@ -11,11 +11,10 @@ import (
 	"github.com/mfojtik/patchmanager/pkg/api"
 	"gopkg.in/yaml.v2"
 
+	"github.com/cheggaaa/pb/v3"
 	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
-
 	"github.com/mfojtik/patchmanager/pkg/classifier"
 	"github.com/mfojtik/patchmanager/pkg/github"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
@@ -28,7 +27,7 @@ type runOptions struct {
 	release        string
 	outFile        string
 
-	capacity   int
+	maxPicks   int
 	configFile string
 	config     *v1.PatchManagerConfig
 
@@ -63,7 +62,7 @@ func (r *runOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.bugzillaAPIKey, "bugzilla-apikey", "", "Bugzilla API Key (BUGZILLA_APIKEY env variable)")
 	fs.StringVar(&r.release, "release", "", "Target release (eg. 4.6, 4.7, etc...)")
 	fs.StringVar(&r.configFile, "config", "", "Path to a config file")
-	fs.IntVar(&r.capacity, "capacity", 10, "Set the default capacity to approve if config file is not used or default capacity is not set")
+	fs.IntVar(&r.maxPicks, "max-pick", 10, "Set the default maxPicks to approve if config file is not used or default maxPicks is not set")
 	fs.StringVarP(&r.outFile, "output", "o", "", "Set output file instead of standard output")
 }
 
@@ -77,8 +76,8 @@ func (r *runOptions) Validate() error {
 	if len(r.release) == 0 {
 		return fmt.Errorf("release flag must be set")
 	}
-	if r.capacity <= 0 {
-		return fmt.Errorf("capacity must be above 0")
+	if r.maxPicks <= 0 {
+		return fmt.Errorf("maxPicks must be above 0")
 	}
 	if len(r.configFile) == 0 {
 		return fmt.Errorf("need to specify valid config file")
@@ -138,16 +137,24 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 
 	if capacity := len(r.config.CapacityConfig.Groups); capacity > 0 {
-		klog.Infof("Capacity configuration for %d components loaded (default capacity: %d)", capacity, r.config.CapacityConfig.DefaultCapacity)
+		klog.Infof("Capacity configuration for %d groups loaded (default maxPicks: %d)", capacity, r.config.CapacityConfig.DefaultCapacity)
 	} else {
-		klog.Infof("Using default capacity %d", r.capacity)
+		klog.Infof("Maximum pulls to pick is set to %d", r.maxPicks)
 	}
 
 	klog.Infof("Wait to finish processing %d cherry-pick-approve pull requests ...", len(pendingPullRequests))
 
-	for i := range pendingPullRequests {
-		pendingPullRequests[i].Score = r.classifier.Score(pendingPullRequests[i])
+	bar := pb.StartNew(len(pendingPullRequests))
+	pool := classifier.NewScoringWorkerPool(r.classifier).WithCallback(func(interface{}) {
+		bar.Increment()
+	})
+	if err := pool.Add(pendingPullRequests...); err != nil {
+		return err
 	}
+	if err := pool.WaitForFinish(); err != nil {
+		return err
+	}
+	bar.Finish()
 
 	sort.Slice(pendingPullRequests, func(i, j int) bool {
 		return pendingPullRequests[i].Score > pendingPullRequests[j].Score
@@ -159,12 +166,20 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 
 	candidates := []v1.Candidate{}
+	totalPicks := 0
 	for _, p := range pendingPullRequests {
 		decision := "pick"
 		decisionReason := ""
 		if !capacity.hasCapacity(strings.Join(p.Bug().Component, "/")) {
 			decision = "skip"
 			decisionReason = fmt.Sprintf("target capacity for component %s is %d", strings.Join(p.Bug().Component, "/"), api.ComponentCapacity(&r.config.CapacityConfig, strings.Join(p.Bug().Component, "/")))
+		}
+		if decision == "pick" {
+			totalPicks++
+		}
+		if totalPicks > r.maxPicks {
+			decision = "skip"
+			decisionReason = fmt.Sprintf("maximum picks set by patch manager for this z-stream is %d", r.maxPicks)
 		}
 		candidates = append(candidates, v1.Candidate{
 			PMScore:        p.Bug().PMScore,
@@ -195,6 +210,9 @@ func (r *runOptions) Run(ctx context.Context) error {
 	if _, err = fmt.Fprintf(output, "%s\n", string(out)); err != nil {
 		return err
 	}
+	if len(r.outFile) > 0 {
+		return output.Sync()
+	}
 
-	return output.Sync()
+	return nil
 }

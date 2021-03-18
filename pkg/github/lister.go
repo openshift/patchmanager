@@ -53,8 +53,7 @@ func (l *PullRequestLister) ListForRelease(ctx context.Context, release string) 
 		bugNumber := parseBugNumber(newPendingPullRequest.Issue.GetTitle())
 
 		if newPendingPullRequest.bugID, err = strconv.Atoi(bugNumber); len(bugNumber) == 0 || err != nil {
-			fmt.Printf("WARNING: Pull Request with invalid title: %s/%s#%d: %s\n", newPendingPullRequest.Issue.GetRepository().GetOrganization(),
-				newPendingPullRequest.Issue.GetRepository().GetName(), newPendingPullRequest.Issue.GetNumber(), newPendingPullRequest.Issue.GetTitle())
+			fmt.Printf("WARNING: Pull Request with invalid title: %s/%s#%d: %s (%w)\n", newPendingPullRequest.Issue.GetHTMLURL(), newPendingPullRequest.Issue.GetTitle(), err)
 			continue
 		}
 
@@ -75,8 +74,8 @@ func (l *PullRequestLister) ListForRelease(ctx context.Context, release string) 
 
 // parseBugNumber takes pull request title "Bug ####: Description" and return the ####
 func parseBugNumber(pullRequestTitle string) string {
-	re := regexp.MustCompile(`Bug (\d+):`)
-	matches := re.FindAllString(pullRequestTitle, 1)
+	re := regexp.MustCompile(`bug (\d+):`)
+	matches := re.FindAllString(strings.ToLower(pullRequestTitle), 1)
 	if len(matches) == 0 {
 		return ""
 	}
