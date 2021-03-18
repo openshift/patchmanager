@@ -8,6 +8,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// NewCandidateList takes list of candidates and transforms it to CandidateList which is serialized to YAML.
+// YAML file include comments with additional information about pulls.
 func NewCandidateList(candidates []v1.Candidate) v1.CandidateList {
 	items := make([]v1.Candidate, len(candidates))
 

@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lensesio/tableprinter"
+
 	"github.com/mfojtik/patchmanager/pkg/scoring"
 
 	"github.com/mfojtik/patchmanager/pkg/api"
@@ -116,21 +118,26 @@ func (r *runOptions) Complete() error {
 }
 
 type capacityTracker struct {
-	config   *v1.CapacityConfig
-	capacity map[string]int
+	config           *v1.CapacityConfig
+	componentPicks   map[string]int
+	componentSkips   map[string]int
+	componentCounter map[string]int
+}
+
+func (c capacityTracker) inc(component string) {
+	c.componentCounter[component] = c.componentCounter[component] + 1
 }
 
 func (c capacityTracker) hasCapacity(component string) bool {
-	current, ok := c.capacity[component]
-	if !ok {
-		c.capacity[component] = c.config.DefaultCapacity - 1
-		return true
+	isConfigured, maxComponentCapacity := api.ComponentCapacity(c.config, component)
+	if isConfigured {
+		return c.componentCounter[component] <= maxComponentCapacity
 	}
-	if current <= api.ComponentCapacity(c.config, component) {
-		c.capacity[component] = c.capacity[component] - 1
-		return true
-	}
-	return false
+	return c.componentCounter[component] <= c.config.MaximumDefaultPicksPerComponent
+}
+
+func componentName(p []string) string {
+	return strings.ToLower(strings.Join(p, "/"))
 }
 
 func (r *runOptions) Run(ctx context.Context) error {
@@ -140,12 +147,9 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 
 	if capacity := len(r.config.CapacityConfig.Groups); capacity > 0 {
-		klog.Infof("Capacity configuration for %d groups loaded (default maxPicks: %d)", capacity, r.config.CapacityConfig.DefaultCapacity)
-	} else {
-		klog.Infof("Maximum pulls to pick is set to %d", r.maxPicks)
+		klog.Infof("Capacity configuration for %d groups loaded (default per component: %d)", capacity, r.config.CapacityConfig.MaximumDefaultPicksPerComponent)
 	}
-
-	klog.Infof("Wait to finish processing %d cherry-pick-approve pull requests ...", len(pullsToReview))
+	klog.Infof("Maximum allowed pull requests to pick is %d", r.maxPicks)
 
 	// assign score to each pull request by running it trough set of classifiers
 	progress := pb.StartNew(len(pullsToReview))
@@ -155,6 +159,8 @@ func (r *runOptions) Run(ctx context.Context) error {
 	if err := pool.Add(pullsToReview...); err != nil {
 		return err
 	}
+
+	klog.Infof("Wait to finish classifying %d z-stream candidate pull requests ...", len(pullsToReview))
 	if err := pool.WaitForFinish(); err != nil {
 		return err
 	}
@@ -166,34 +172,53 @@ func (r *runOptions) Run(ctx context.Context) error {
 	})
 
 	capacity := &capacityTracker{
-		config:   &r.config.CapacityConfig,
-		capacity: map[string]int{},
+		config:           &r.config.CapacityConfig,
+		componentCounter: map[string]int{},
+		componentPicks:   map[string]int{},
+		componentSkips:   map[string]int{},
 	}
 
-	// decide which pull requests we are going to pick based on the capacity
+	// decide which pull requests we are going to pick based on the componentCounter
 	candidates := []v1.Candidate{}
 	totalPicks := 0
+
 	for _, p := range pullsToReview {
 		decision := "pick"
-		decisionReason := ""
-		if !capacity.hasCapacity(strings.Join(p.Bug().Component, "/")) {
+		decisionReason := fmt.Sprintf("picked for z-stream with score %0.2f", p.Score)
+
+		// increment capacity counter for this component
+		capacity.inc(componentName(p.Bug().Component))
+
+		// if component has no capacity to take this pick
+		if !capacity.hasCapacity(componentName(p.Bug().Component)) {
 			decision = "skip"
-			decisionReason = fmt.Sprintf("target capacity for component %s is %d", strings.Join(p.Bug().Component, "/"), api.ComponentCapacity(&r.config.CapacityConfig, strings.Join(p.Bug().Component, "/")))
+			_, componentCapacity := api.ComponentCapacity(&r.config.CapacityConfig, componentName(p.Bug().Component))
+			decisionReason = fmt.Sprintf("maximum allowed picks for component %s is %d", componentName(p.Bug().Component), componentCapacity)
 		}
+
+		// if there are more picks than total picks allowed
 		if decision == "pick" {
 			totalPicks++
 		}
 		if totalPicks > r.maxPicks {
 			decision = "skip"
-			decisionReason = fmt.Sprintf("maximum picks set by patch manager for this z-stream is %d", r.maxPicks)
+			decisionReason = fmt.Sprintf("maximum total for this z-stream is %d", r.maxPicks)
 		}
+
+		if decision == "pick" {
+			capacity.componentPicks[componentName(p.Bug().Component)]++
+		} else {
+			capacity.componentSkips[componentName(p.Bug().Component)]++
+		}
+
+		// add to candidate list
 		candidates = append(candidates, v1.Candidate{
 			PMScore:        p.Bug().PMScore,
 			Score:          p.Score,
 			Description:    p.Bug().Summary,
 			PullRequestURL: p.Issue.GetHTMLURL(),
 			BugNumber:      fmt.Sprintf("%d", p.Bug().ID),
-			Component:      strings.Join(p.Bug().Component, "/"),
+			Component:      componentName(p.Bug().Component),
 			Severity:       p.Bug().Severity,
 			Decision:       decision,
 			DecisionReason: decisionReason,
@@ -205,12 +230,27 @@ func (r *runOptions) Run(ctx context.Context) error {
 		return err
 	}
 
+	metrics := []componentMetric{}
+	for name, count := range capacity.componentCounter {
+		metrics = append(metrics, componentMetric{
+			Component: name,
+			Total:     count,
+			Picks:     capacity.componentPicks[name],
+			Skips:     capacity.componentSkips[name],
+		})
+	}
+	printer := tableprinter.New(os.Stdout)
+	fmt.Println()
+	printer.Print(metrics)
+	fmt.Println()
+
 	output := os.Stdout
 	if len(r.outFile) > 0 {
 		output, err = os.OpenFile(r.outFile, os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
 			return err
 		}
+		klog.Infof("Result saved to %q", r.outFile)
 	}
 
 	if _, err = fmt.Fprintf(output, "%s\n", string(out)); err != nil {
@@ -221,4 +261,11 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+type componentMetric struct {
+	Component string `header:"Component Name"`
+	Total     int    `header:"Total"`
+	Picks     int    `header:"Picks"`
+	Skips     int    `header:"Skips"`
 }

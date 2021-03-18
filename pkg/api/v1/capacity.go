@@ -4,8 +4,11 @@ package v1
 type CapacityConfig struct {
 	Groups []ComponentGroup `yaml:"groups"`
 
-	// DefaultCapacity is capacity used when there is no capacity defined for given component
-	DefaultCapacity int `yaml:"default"`
+	// MaximumTotalPicks is total number if pull request approved regardless of component
+	MaximumTotalPicks int `yaml:"maxTotalPicks"`
+
+	// MaximumdefaultPicksPerComponent is default capacity for component when there is no capacity defined.
+	MaximumDefaultPicksPerComponent int `yaml:"maxDefaultPicksPerComponent"`
 }
 
 type ComponentGroup struct {

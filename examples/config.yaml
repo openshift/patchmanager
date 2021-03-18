@@ -5,9 +5,10 @@ mergeWindow:
   to:
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
-  default: 5
+  maxDefaultPicksPerComponent: 5
+  maxTotalPicks: 50
   groups:
-    - name: API&Auth
+    - name: Core
       capacity: 5
       components:
       - Master
