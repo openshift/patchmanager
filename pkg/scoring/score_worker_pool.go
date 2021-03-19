@@ -2,8 +2,8 @@ package scoring
 
 import (
 	"github.com/enriquebris/goworkerpool"
-	"github.com/mfojtik/patchmanager/pkg/classifiers"
-	"github.com/mfojtik/patchmanager/pkg/github"
+	"github.com/openshift/patchmanager/pkg/classifiers"
+	"github.com/openshift/patchmanager/pkg/github"
 )
 
 type Pool interface {

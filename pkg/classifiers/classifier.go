@@ -1,7 +1,7 @@
 package classifiers
 
 import (
-	"github.com/mfojtik/patchmanager/pkg/github"
+	"github.com/openshift/patchmanager/pkg/github"
 )
 
 // Classifier interface define Score function that every classifier must implement

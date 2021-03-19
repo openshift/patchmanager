@@ -92,7 +92,7 @@ component will be picked.
 
 ## Installation
 
-To install this command, simple `go install github.com/mfojtik/patch-manager/cmd/patchmanager` should be sufficient.
+To install this command, simple `go install github.com/openshift/patchmanager/cmd/patchmanager` should be sufficient.
 
 ### Development
 
