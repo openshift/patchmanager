@@ -90,18 +90,26 @@ classifiers:
 Using the above config, only 2 pull requests for *Networking* component will be approved and only 5 pull requests for *kube-apiserver* bugzilla
 component will be picked.
 
-## Installation
-
-To install this command, simple `go install github.com/openshift/patchmanager/cmd/patchmanager` should be sufficient.
-
-### Development
-
-In case you want to contribute, you can use *Makefile* to build the patchmanager binary by running `make`.
 
 ## Pre-requirements
 
 * You will need [Github Personal Token](https://github.com/settings/tokens) exported via environment variable `GITHUB_TOKEN` (or use command flag).
 * You will need [Bugzilla API Token](https://bugzilla.redhat.com/userprefs.cgi?tab=apikey) exported via environment variable `BUGZILLA_APIKEY` (or use command flag).
+* You need a config file (check examples/ directory)
+
+## Installation
+
+To install this command run:
+
+```
+$ go get github.com/mfojtik/patch-manager/cmd/patchmanager
+```
+
+The binary `patchmanager` should be installed in your *$GOPATH/bin* directory.
+
+### Development
+
+In case you want to contribute, you can use *Makefile* to build the `patchmanager` binary by invoking `make`.
 
 ## Usage
 
