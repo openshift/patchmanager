@@ -95,7 +95,7 @@ component will be picked.
 
 * You will need [Github Personal Token](https://github.com/settings/tokens) exported via environment variable `GITHUB_TOKEN` (or use command flag).
 * You will need [Bugzilla API Token](https://bugzilla.redhat.com/userprefs.cgi?tab=apikey) exported via environment variable `BUGZILLA_APIKEY` (or use command flag).
-* You need a config file (check examples/ directory)
+* You need a config file (check examples/ directory). You can also use `PATCHMANAGER_CONFIG=https://raw.githubusercontent.com/openshift/patchmanager/main/examples/config.yaml`
 
 ## Installation
 
