@@ -5,7 +5,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
 )
 
 func TestMarshal(t *testing.T) {

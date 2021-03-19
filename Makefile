@@ -9,8 +9,8 @@ include $(addprefix ./vendor/github.com/openshift/build-machinery-go/make/, \
 )
 
 build-image:
-	podman build --squash -f Dockerfile -t quay.io/mfojtik/patchmanager:v0.1
+	podman build --squash -f Dockerfile -t quay.io/openshift/patchmanager:v0.1
 .PHONY: build-image
 
 push-image:
-	podman push quay.io/mfojtik/patchmanager:v0.1
+	podman push quay.io/openshift/patchmanager:v0.1

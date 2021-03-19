@@ -3,8 +3,8 @@ package classifiers
 import (
 	"strings"
 
-	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
-	"github.com/mfojtik/patchmanager/pkg/github"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
+	"github.com/openshift/patchmanager/pkg/github"
 )
 
 // ComponentClassifier classify pull request based on bugzilla component.

@@ -1,4 +1,4 @@
-module github.com/mfojtik/patchmanager
+module github.com/openshift/patchmanager
 
 go 1.15
 

@@ -1,7 +1,7 @@
 package api
 
 import (
-	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
 )
 
 func ComponentCapacity(config *v1.CapacityConfig, name string) (bool, int) {

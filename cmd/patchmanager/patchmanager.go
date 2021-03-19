@@ -8,11 +8,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/mfojtik/patchmanager/pkg/cmd/list"
+	"github.com/openshift/patchmanager/pkg/cmd/list"
 
-	"github.com/mfojtik/patchmanager/pkg/cmd/approve"
+	"github.com/openshift/patchmanager/pkg/cmd/approve"
 
-	"github.com/mfojtik/patchmanager/pkg/cmd/run"
+	"github.com/openshift/patchmanager/pkg/cmd/run"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"

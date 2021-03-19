@@ -1,8 +1,8 @@
 package classifiers
 
 import (
-	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
-	"github.com/mfojtik/patchmanager/pkg/github"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
+	"github.com/openshift/patchmanager/pkg/github"
 )
 
 // FlagsClassifier classify pull request based on importance of bugzilla flags.

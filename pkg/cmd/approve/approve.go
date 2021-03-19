@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mfojtik/patchmanager/pkg/github"
+	"github.com/openshift/patchmanager/pkg/github"
 
-	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
 	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"

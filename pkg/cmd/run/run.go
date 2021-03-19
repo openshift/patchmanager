@@ -10,15 +10,15 @@ import (
 
 	"github.com/lensesio/tableprinter"
 
-	"github.com/mfojtik/patchmanager/pkg/scoring"
+	"github.com/openshift/patchmanager/pkg/scoring"
 
-	"github.com/mfojtik/patchmanager/pkg/api"
-	"github.com/mfojtik/patchmanager/pkg/classifiers"
+	"github.com/openshift/patchmanager/pkg/api"
+	"github.com/openshift/patchmanager/pkg/classifiers"
 	"gopkg.in/yaml.v2"
 
 	"github.com/cheggaaa/pb/v3"
-	v1 "github.com/mfojtik/patchmanager/pkg/api/v1"
-	"github.com/mfojtik/patchmanager/pkg/github"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
+	"github.com/openshift/patchmanager/pkg/github"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
