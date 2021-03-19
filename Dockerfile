@@ -1,4 +1,4 @@
-FROM registry.centos.org/centos:8
-ADD ./patchmanager /usr/bin/patchmanager
-EXPOSE 8080
+FROM quay.io/fedora/fedora:34
+AdD patchmanager /usr/bin/patchmanager
+ENV PATCHMANAGER_CONFIG https://raw.githubusercontent.com/openshift/patchmanager/main/examples/config.yaml
 CMD /usr/bin/patchmanager

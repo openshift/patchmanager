@@ -107,6 +107,12 @@ $ go get github.com/mfojtik/patch-manager/cmd/patchmanager
 
 The binary `patchmanager` should be installed in your *$GOPATH/bin* directory.
 
+Alternatively you can use `podman` to run patchmanager. Example:
+
+```
+podman run -it --env-host quay.io/mfojtik/patchmanager:latest patchmanager run --release=4.7
+```
+
 ### Development
 
 In case you want to contribute, you can use *Makefile* to build the `patchmanager` binary by invoking `make`.
