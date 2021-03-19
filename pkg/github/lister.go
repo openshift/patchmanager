@@ -53,7 +53,7 @@ func (l *PullRequestLister) ListForRelease(ctx context.Context, release string) 
 		bugNumber := parseBugNumber(newPendingPullRequest.Issue.GetTitle())
 
 		if newPendingPullRequest.bugID, err = strconv.Atoi(bugNumber); len(bugNumber) == 0 || err != nil {
-			fmt.Printf("WARNING: Pull Request with invalid title: %s/%s#%d: %s (%w)\n", newPendingPullRequest.Issue.GetHTMLURL(), newPendingPullRequest.Issue.GetTitle(), err)
+			fmt.Printf("WARNING: Pull Request with invalid title: %s: %s (%v)\n", newPendingPullRequest.Issue.GetHTMLURL(), newPendingPullRequest.Issue.GetTitle(), err)
 			continue
 		}
 
