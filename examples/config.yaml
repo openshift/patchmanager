@@ -1,8 +1,8 @@
 ---
 # MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
 mergeWindow:
-  from:
-  to:
+  from: ""
+  to: ""
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   maxDefaultPicksPerComponent: 5

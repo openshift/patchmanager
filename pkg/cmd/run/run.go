@@ -3,7 +3,6 @@ package run
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -66,7 +65,7 @@ func (r *runOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.githubToken, "github-token", "", "Github Access Token (GITHUB_TOKEN env variable)")
 	fs.StringVar(&r.bugzillaAPIKey, "bugzilla-apikey", "", "Bugzilla API Key (BUGZILLA_APIKEY env variable)")
 	fs.StringVar(&r.release, "release", "", "Target release (eg. 4.6, 4.7, etc...)")
-	fs.StringVar(&r.configFile, "config", "", "Path to a config file")
+	fs.StringVar(&r.configFile, "config", os.Getenv("PATCHMANAGER_CONFIG"), "Path to a config file (PATCHMANAGER_CONFIG env variable)")
 	fs.IntVar(&r.maxPicks, "max-pick", 10, "Set the default maxPicks to approve if config file is not used or default maxPicks is not set")
 	fs.StringVarP(&r.outFile, "output", "o", "", "Set output file instead of standard output")
 }
@@ -79,7 +78,7 @@ func (r *runOptions) Validate() error {
 		return fmt.Errorf("github-token flag must be specified or GITHUB_TOKEN environment must be set")
 	}
 	if len(r.release) == 0 {
-		return fmt.Errorf("release flag must be set")
+		return fmt.Errorf("release flag must be set (eg: --release=4.7)")
 	}
 	if r.maxPicks <= 0 {
 		return fmt.Errorf("maxPicks must be above 0")
@@ -98,14 +97,10 @@ func (r *runOptions) Complete() error {
 		r.githubToken = os.Getenv("GITHUB_TOKEN")
 	}
 
-	configBytes, err := ioutil.ReadFile(r.configFile)
+	var err error
+	r.config, err = api.GetConfig(r.configFile)
 	if err != nil {
-		return err
-	}
-
-	r.config = &v1.PatchManagerConfig{}
-	if err := yaml.Unmarshal(configBytes, r.config); err != nil {
-		return err
+		return fmt.Errorf("unable to get config file (%q): %v", r.configFile, err)
 	}
 
 	r.classifier = classifiers.NewMultiClassifier(
