@@ -20,10 +20,9 @@ below, an "urgent" bug with *TestBlocker* flag will get score `1.8` which will l
 ```yaml
 ---
 # MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
-# TODO: This is not implemented yet.
 mergeWindow:
-  from:
-  to:
+  from: # YYYY-MM-DD
+  to: # YYYY-MM-DD
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   default: 5 # <- this is a "default" capacity if no capacity is specified for a component
@@ -119,8 +118,9 @@ In case you want to contribute, you can use *Makefile* to build the `patchmanage
 
 ## Usage
 
-1. `patchmanager run --release=4.x --config=path/to/config.yaml -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
-  and scored based on the classifiers. The `capacity` flag will cause that on *N* pull requests will be "picked".
+1. Run `patchmanager run --release=4.x --config=path/to/config.yaml -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
+  and scored based on the classifiers. The `capacity` flag will cause that on *N* pull requests will be "picked". (TIP: You can set the `PATCHMANAGER_CONFIG` environment variable
+   which points to a config location)
   
 *Example YAML file:*
   
@@ -159,9 +159,10 @@ items:
 ```
 
 2. A human patch manager need to review this YAML file and make decisions on individual changes. Decision can be either **pick** or **skip**.
+   The `decisionReason` field will be used in a comment if `-add-comment` flag is specified (see below).
    
-3. Once you are done editing YAML file, you can run the `patchmanager approve -f candidates.yaml` command which will apply the `cherry-pick-approved` label
-  on ALL pull requests with "pick" decision.
+3. Once you are done editing YAML file, you can run the `patchmanager approve --config=path/to/config.yaml -f candidates.yaml` command which will apply the `cherry-pick-approved` label
+  on ALL pull requests with "pick" decision. Use the `--add-comment` flag if you want to leave a comment with score and reason for every approved or skipped pull request.
    
 4. Alternatively, you can use `patchmanager list -f candidates.yaml` to format the pull requests in human readable table:
 

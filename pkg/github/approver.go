@@ -28,6 +28,17 @@ func (p *PullRequestApprover) CherryPickApprove(ctx context.Context, url string)
 	return err
 }
 
+func (p *PullRequestApprover) Comment(ctx context.Context, url, comment string) error {
+	owner, repo, number, err := parsePullRequestMeta(url)
+	if err != nil {
+		return err
+	}
+	_, _, err = p.client.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
+		Body: &comment,
+	})
+	return err
+}
+
 func parsePullRequestMeta(u string) (string, string, int, error) {
 	parts := strings.Split(strings.TrimPrefix(u, "https://github.com/"), "/")
 	if len(parts) != 3 {
