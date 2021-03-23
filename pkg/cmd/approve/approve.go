@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
+
+	"github.com/openshift/patchmanager/pkg/config"
+
+	"github.com/openshift/patchmanager/pkg/cmd/util"
 
 	"github.com/openshift/patchmanager/pkg/github"
 
@@ -22,6 +25,8 @@ type approveOptions struct {
 	githubToken string
 	force       bool
 	inFile      string
+	config      *config.PatchManagerConfig
+	configFile  string
 }
 
 // NewApproveCommand creates a render command.
@@ -52,6 +57,7 @@ func (r *approveOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.githubToken, "github-token", "", "Github Access Token (GITHUB_TOKEN env variable)")
 	fs.StringVarP(&r.inFile, "file", "f", "", "Set input file to read the list of candidates")
 	fs.BoolVar(&r.force, "force", false, "Do not ask stupid questions and ship it")
+	fs.StringVar(&r.configFile, "config", os.Getenv("PATCHMANAGER_CONFIG"), "Path to a config file (PATCHMANAGER_CONFIG env variable)")
 }
 
 func (r *approveOptions) Validate() error {
@@ -59,7 +65,7 @@ func (r *approveOptions) Validate() error {
 		return fmt.Errorf("github-token flag must be specified or GITHUB_TOKEN environment must be set")
 	}
 	if len(r.inFile) == 0 {
-		return fmt.Errorf("input file must be specified")
+		return fmt.Errorf("candidate list file must be specified (-f)")
 	}
 	return nil
 }
@@ -68,6 +74,30 @@ func (r *approveOptions) Complete() error {
 	if len(r.githubToken) == 0 {
 		r.githubToken = os.Getenv("GITHUB_TOKEN")
 	}
+
+	var err error
+	if len(r.configFile) == 0 {
+		return fmt.Errorf("you must provide valid config file (--config=config.yaml)")
+	}
+	r.config, err = config.GetConfig(r.configFile)
+	if err != nil {
+		return fmt.Errorf("unable to get config file %q: %v", r.configFile, err)
+	}
+
+	if !config.IsMergeWindowOpen(r.config.MergeWindowConfig) {
+		fmt.Fprintf(os.Stderr, `# !!! WARNING !!!
+#
+# Based on the merge window configuration, approving pull requests is NOT recommended.
+# The window opens on %s and close on %s.
+# Please consult #forum-release for more details.
+
+Do you wish to continue? (y/n): `, r.config.MergeWindowConfig.From, r.config.MergeWindowConfig.To)
+		if !util.AskForConfirmation() {
+			fmt.Println()
+			os.Exit(0)
+		}
+	}
+
 	return nil
 }
 
@@ -95,7 +125,7 @@ func (r *approveOptions) Run(ctx context.Context) error {
 		}
 
 		fmt.Fprintf(os.Stdout, "\nDo you want to continue? (y/n)? ")
-		if !askForConfirmation() {
+		if !util.AskForConfirmation() {
 			return nil
 		}
 		fmt.Fprint(os.Stdout, "\n")
@@ -112,22 +142,4 @@ func (r *approveOptions) Run(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func askForConfirmation() bool {
-	var response string
-	_, err := fmt.Scanln(&response)
-	if err != nil {
-		klog.Fatal(err)
-	}
-
-	switch strings.ToLower(response) {
-	case "y", "yes":
-		return true
-	case "n", "no":
-		return false
-	default:
-		fmt.Println("I'm sorry but I didn't get what you meant, please type (y)es or (n)o and then press enter:")
-		return askForConfirmation()
-	}
 }

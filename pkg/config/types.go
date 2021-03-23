@@ -1,8 +1,9 @@
 package config
 
 type PatchManagerConfig struct {
-	CapacityConfig     CapacityConfig   `yaml:"capacity"`
-	ClassifiersConfigs ClassifierConfig `yaml:"classifiers"`
+	CapacityConfig     CapacityConfig    `yaml:"capacity"`
+	ClassifiersConfigs ClassifierConfig  `yaml:"classifiers"`
+	MergeWindowConfig  MergeWindowConfig `yaml:"mergeWindow"`
 }
 
 type ClassifierConfig struct {
@@ -10,6 +11,11 @@ type ClassifierConfig struct {
 	ComponentClassifier ComponentClassifierConfig `yaml:"components"`
 	Severities          SeverityClassifierConfig  `yaml:"severities"`
 	PMScores            PMScoreClassifierConfig   `yaml:"pmScores"`
+}
+
+type MergeWindowConfig struct {
+	From string `yaml:"from,omitempty"`
+	To   string `yaml:"to,omitempty"`
 }
 
 type FlagClassifierConfig map[string]float32

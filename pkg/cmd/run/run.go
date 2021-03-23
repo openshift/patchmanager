@@ -7,22 +7,20 @@ import (
 	"sort"
 	"strings"
 
-	config2 "github.com/openshift/patchmanager/pkg/config"
-
+	"github.com/cheggaaa/pb/v3"
 	"github.com/lensesio/tableprinter"
 
-	"github.com/openshift/patchmanager/pkg/scoring"
-
-	"github.com/openshift/patchmanager/pkg/api"
-	"github.com/openshift/patchmanager/pkg/classifiers"
-	"gopkg.in/yaml.v2"
-
-	"github.com/cheggaaa/pb/v3"
-	v1 "github.com/openshift/patchmanager/pkg/api/v1"
-	"github.com/openshift/patchmanager/pkg/github"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v2"
 	"k8s.io/klog/v2"
+
+	"github.com/openshift/patchmanager/pkg/api"
+	v1 "github.com/openshift/patchmanager/pkg/api/v1"
+	"github.com/openshift/patchmanager/pkg/classifiers"
+	"github.com/openshift/patchmanager/pkg/config"
+	"github.com/openshift/patchmanager/pkg/github"
+	"github.com/openshift/patchmanager/pkg/scoring"
 )
 
 // runOptions holds values to drive the start command.
@@ -34,7 +32,7 @@ type runOptions struct {
 
 	maxPicks   int
 	configFile string
-	config     *config2.PatchManagerConfig
+	config     *config.PatchManagerConfig
 
 	classifier classifiers.Classifier
 }
@@ -100,9 +98,12 @@ func (r *runOptions) Complete() error {
 	}
 
 	var err error
-	r.config, err = config2.GetConfig(r.configFile)
+	if len(r.configFile) == 0 {
+		return fmt.Errorf("you must provide valid config file (--config=config.yaml)")
+	}
+	r.config, err = config.GetConfig(r.configFile)
 	if err != nil {
-		return fmt.Errorf("unable to get config file (%q): %v", r.configFile, err)
+		return fmt.Errorf("unable to get config file %q: %v", r.configFile, err)
 	}
 
 	r.classifier = classifiers.NewMultiClassifier(
@@ -115,7 +116,7 @@ func (r *runOptions) Complete() error {
 }
 
 type capacityTracker struct {
-	config           *config2.CapacityConfig
+	config           *config.CapacityConfig
 	componentPicks   map[string]int
 	componentSkips   map[string]int
 	componentCounter map[string]int
@@ -126,7 +127,7 @@ func (c capacityTracker) inc(component string) {
 }
 
 func (c capacityTracker) hasCapacity(component string) bool {
-	isConfigured, maxComponentCapacity := config2.ComponentCapacity(c.config, component)
+	isConfigured, maxComponentCapacity := config.ComponentCapacity(c.config, component)
 	if isConfigured {
 		return c.componentCounter[component] <= maxComponentCapacity
 	}
@@ -189,7 +190,7 @@ func (r *runOptions) Run(ctx context.Context) error {
 		// if component has no capacity to take this pick
 		if !capacity.hasCapacity(componentName(p.Bug().Component)) {
 			decision = "skip"
-			_, componentCapacity := config2.ComponentCapacity(&r.config.CapacityConfig, componentName(p.Bug().Component))
+			_, componentCapacity := config.ComponentCapacity(&r.config.CapacityConfig, componentName(p.Bug().Component))
 			decisionReason = fmt.Sprintf("maximum allowed picks for component %s is %d", componentName(p.Bug().Component), componentCapacity)
 		}
 
