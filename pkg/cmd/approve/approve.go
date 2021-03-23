@@ -27,6 +27,7 @@ type approveOptions struct {
 	inFile      string
 	config      *config.PatchManagerConfig
 	configFile  string
+	comment     bool
 }
 
 // NewApproveCommand creates a render command.
@@ -57,6 +58,7 @@ func (r *approveOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.githubToken, "github-token", "", "Github Access Token (GITHUB_TOKEN env variable)")
 	fs.StringVarP(&r.inFile, "file", "f", "", "Set input file to read the list of candidates")
 	fs.BoolVar(&r.force, "force", false, "Do not ask stupid questions and ship it")
+	fs.BoolVar(&r.comment, "add-comment", false, "Provide informative comment about decision to all pull requests")
 	fs.StringVar(&r.configFile, "config", os.Getenv("PATCHMANAGER_CONFIG"), "Path to a config file (PATCHMANAGER_CONFIG env variable)")
 }
 
@@ -133,11 +135,31 @@ func (r *approveOptions) Run(ctx context.Context) error {
 
 	for _, pr := range approved.Items {
 		if pr.PullRequest.Decision != "pick" {
+			if r.comment {
+				if err := approver.Comment(ctx, pr.PullRequest.URL, fmt.Sprintf(`
+This pull request was not picked by patch manager for the current z-stream window (%s-%s).
+
+Score: %.02f
+Reason: %s
+
+**NOTE**: This message is automatically generated, if you have questions please ask on #forum-release
+`,
+					pr.PullRequest.Score, pr.PullRequest.DecisionReason)); err != nil {
+					klog.Errorf("Failed to comment on pull request %q: %v", pr.PullRequest.URL, err)
+				}
+			}
 			continue
 		}
-		fmt.Fprintf(os.Stdout, "- Approving %s ...\n", pr.PullRequest.URL)
+
+		fmt.Fprintf(os.Stdout, "-> Approving %s ...\n", pr.PullRequest.URL)
 		if err := approver.CherryPickApprove(ctx, pr.PullRequest.URL); err != nil {
-			klog.Errorf("Failed to approve pull request %q: %v", err)
+			klog.Errorf("Failed to approve pull request %q: %v", pr.PullRequest.URL, err)
+		}
+
+		if r.comment {
+			if err := approver.Comment(ctx, pr.PullRequest.URL, fmt.Sprintf("Approved for z-stream by score: %0.2f", pr.PullRequest.Score)); err != nil {
+				klog.Errorf("Failed to comment on pull request %q: %v", pr.PullRequest.URL, err)
+			}
 		}
 	}
 
