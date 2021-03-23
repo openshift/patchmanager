@@ -3,7 +3,8 @@ package classifiers
 import (
 	"strings"
 
-	v1 "github.com/openshift/patchmanager/pkg/api/v1"
+	"github.com/openshift/patchmanager/pkg/config"
+
 	"github.com/openshift/patchmanager/pkg/github"
 )
 
@@ -11,7 +12,7 @@ import (
 // Urgent:1, High:0.5, Medium:0.2, Low: 0.1
 // Unknown severity gets penalty of -1.
 type SeverityClassifier struct {
-	Config *v1.SeverityClassifierConfig
+	Config *config.SeverityClassifierConfig
 }
 
 func (s *SeverityClassifier) Score(pullRequest *github.PullRequest) float32 {
