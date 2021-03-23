@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
+
+	"k8s.io/klog/v2"
 
 	"gopkg.in/yaml.v2"
 )
@@ -49,4 +52,22 @@ func ComponentCapacity(config *CapacityConfig, name string) (bool, int) {
 		}
 	}
 	return false, config.MaximumDefaultPicksPerComponent
+}
+
+func IsMergeWindowOpen(c MergeWindowConfig) bool {
+	// no configuration means always open
+	if len(c.From) == 0 || len(c.To) == 0 {
+		return true
+	}
+
+	from, err := time.Parse("2006-01-02", c.From)
+	if err != nil {
+		klog.Warning("Invalid merge window from time configuration: %q, expected format: 2006-01-02 (%s)", c.From, err)
+	}
+	to, err := time.Parse("2006-01-02", c.To)
+	if err != nil {
+		klog.Warning("Invalid merge window to time configuration: %q, expected format: 2006-01-02 (%s)", c.To, err)
+	}
+
+	return time.Now().Before(to) && time.Now().After(from)
 }
