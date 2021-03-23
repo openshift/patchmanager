@@ -101,7 +101,7 @@ component will be picked.
 To install this command run:
 
 ```
-$ go get github.com/mfojtik/patch-manager/cmd/patchmanager
+$ go get github.com/openshift/patchmanager/cmd/patchmanager
 ```
 
 The binary `patchmanager` should be installed in your *$GOPATH/bin* directory.
