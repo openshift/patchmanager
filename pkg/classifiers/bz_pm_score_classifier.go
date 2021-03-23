@@ -3,13 +3,14 @@ package classifiers
 import (
 	"strconv"
 
-	v1 "github.com/openshift/patchmanager/pkg/api/v1"
+	"github.com/openshift/patchmanager/pkg/config"
+
 	"github.com/openshift/patchmanager/pkg/github"
 )
 
 // ProductManagementScoreClassifier classify pull request based on the product management score (PMScore).
 type ProductManagementScoreClassifier struct {
-	Config *v1.PMScoreClassifierConfig
+	Config *config.PMScoreClassifierConfig
 }
 
 func (p *ProductManagementScoreClassifier) Score(pullRequest *github.PullRequest) float32 {

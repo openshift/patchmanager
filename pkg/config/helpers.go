@@ -1,4 +1,4 @@
-package api
+package config
 
 import (
 	"crypto/tls"
@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "github.com/openshift/patchmanager/pkg/api/v1"
 	"gopkg.in/yaml.v2"
 )
 
 // GetConfig gets a configuration file either locally or remotely via HTTP or HTTPS client.
-func GetConfig(location string) (*v1.PatchManagerConfig, error) {
-	var config v1.PatchManagerConfig
+func GetConfig(location string) (*PatchManagerConfig, error) {
+	var config PatchManagerConfig
 
 	// local files
 	if !strings.HasPrefix(location, "http://") && !strings.HasPrefix(location, "https://") {
@@ -39,4 +38,15 @@ func GetConfig(location string) (*v1.PatchManagerConfig, error) {
 	}
 	err = yaml.Unmarshal(configBytes, &config)
 	return &config, err
+}
+
+func ComponentCapacity(config *CapacityConfig, name string) (bool, int) {
+	for _, group := range config.Groups {
+		for _, c := range group.Components {
+			if c == name {
+				return true, group.Capacity
+			}
+		}
+	}
+	return false, config.MaximumDefaultPicksPerComponent
 }
