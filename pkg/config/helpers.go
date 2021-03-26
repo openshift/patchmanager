@@ -54,12 +54,15 @@ func ComponentCapacity(config *CapacityConfig, name string) (bool, int) {
 	return false, config.MaximumDefaultPicksPerComponent
 }
 
+func HasMergeWindow(c MergeWindowConfig) bool {
+	return len(c.From) > 0 && len(c.To) > 0
+}
+
 func IsMergeWindowOpen(c MergeWindowConfig) bool {
 	// no configuration means always open
-	if len(c.From) == 0 || len(c.To) == 0 {
+	if !HasMergeWindow(c) {
 		return true
 	}
-
 	from, err := time.Parse("2006-01-02", c.From)
 	if err != nil {
 		klog.Warning("Invalid merge window from time configuration: %q, expected format: 2006-01-02 (%s)", c.From, err)
