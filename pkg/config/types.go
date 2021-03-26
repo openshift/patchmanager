@@ -8,6 +8,7 @@ type PatchManagerConfig struct {
 
 type ClassifierConfig struct {
 	FlagsClassifier     FlagClassifierConfig      `yaml:"flags"`
+	KeywordsClassifier  KeywordClassifierConfig   `yaml: keywords`
 	ComponentClassifier ComponentClassifierConfig `yaml:"components"`
 	Severities          SeverityClassifierConfig  `yaml:"severities"`
 	PMScores            PMScoreClassifierConfig   `yaml:"pmScores"`
@@ -19,6 +20,7 @@ type MergeWindowConfig struct {
 }
 
 type FlagClassifierConfig map[string]float32
+type KeywordClassifierConfig map[string]float32
 type ComponentClassifierConfig map[string]float32
 type SeverityClassifierConfig map[string]float32
 

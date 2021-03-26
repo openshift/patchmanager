@@ -56,6 +56,9 @@ classifiers:
     "TestBlocker": 0.8
     "UpgradeBlocker": 0.8
     "Security": 0.5
+  # Keywords classifier assign score based on bugzilla keywords
+  keywords:
+    "FastFix": 1.0
   # Components classifier assign score based on importance/criticality of components
   components:
     "authentication": 0.5
