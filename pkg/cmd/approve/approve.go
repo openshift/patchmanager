@@ -182,14 +182,14 @@ func (r *approveOptions) Run(ctx context.Context) error {
 			skipCommentMsg = fmt.Sprintf("\n*%s*\n", r.skipComment)
 		}
 		if err := approver.Comment(ctx, pr.PullRequest.URL, fmt.Sprintf(`
-:hourglass: This pull request was not picked by the patch manager for the current z-stream window and have to wait for the next window%s.
+:hourglass: This pull request was not picked by the patch manager for the current %s z-stream window and have to wait for the next window%s.
 %s
 * Score: *%0.2f*
 * Reason: *%s*
 
 **NOTE**: This message was automatically generated, if you have questions please ask on #forum-release
 `,
-			mergeWindowMsg, skipCommentMsg, pr.PullRequest.Score, pr.PullRequest.DecisionReason)); err != nil {
+			r.config.Release, mergeWindowMsg, skipCommentMsg, pr.PullRequest.Score, pr.PullRequest.DecisionReason)); err != nil {
 			klog.Errorf("Failed to comment on pull request %q: %v", pr.PullRequest.URL, err)
 		}
 	}

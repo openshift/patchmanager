@@ -15,10 +15,14 @@ Complete implementation and details can be found in `pkg/classifiers` package.
 Each classifier can be configured via `config.yaml` file. Most of them assign "score" to each pull request. The score is additive, so in the example
 below, an "urgent" bug with *TestBlocker* flag will get score `1.8` which will likely put it at the top of the list.
 
+The `releases` directory in this repository contain configuration files for last 3 z-stream releases.
+
 #### Example config.yaml:
 
 ```yaml
 ---
+# Release specify which release this config apply to. Different releases might have different criteria (older releases might be more strict in picking anything below high severity).
+release: 4.7
 # MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
 mergeWindow:
   from: # YYYY-MM-DD

@@ -1,0 +1,64 @@
+---
+release: 4.7
+# MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
+# Format is: YYYY-MM-DD
+mergeWindow:
+  from:
+  to:
+# Capacity describe the QE capacity for the "next" week per QE group.
+capacity:
+  maxDefaultPicksPerComponent: 5
+  maxTotalPicks: 50
+  groups:
+    - name: Core
+      capacity: 5
+      components:
+      - Master
+      - apiserver-auth
+      - authentication
+      - service-ca
+      - openshift-apiserver
+      - oauth-apiserver
+      - kube-apiserver
+      - oauth-proxy
+      - kube-storage-version-migrator
+      - config-operator
+    - name: Workloads
+      capacity: 5
+      components:
+      - Deployments
+      - Command Line Interface
+      - oc
+      - kube-controller-manager
+      - kube-scheduler
+# Classifiers describe how much score points a single pull request should get. (0-1)
+# Score impact the position of a PR in merge queue.
+classifiers:
+  flags:
+    "TestBlocker": 0.8
+    "UpgradeBlocker": 0.8
+    "Security": 0.5
+  components:
+    "authentication": 0.5
+    "networking": 0.5
+    "node": 0.5
+    "kube-apiserver": 0.5
+  severities:
+    "urgent": 1.0
+    "high": 0.5
+    "medium": 0.2
+    "low": 0.1
+    "unknown": -1.0
+  pmScores:
+    - from: 0
+      to: 30
+      score: 0
+    - from: 30
+      to: 50
+      score: 0.2
+    - from: 50
+      to: 100
+      score: 0.5
+    - from: 100
+      to: 999
+      score: 0.8
