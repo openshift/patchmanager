@@ -6,14 +6,14 @@ them based on multiple criteria.
 Triage is done via scoring system where each pull request is being classified by the following:
 
 * **Bug Severity**
-* **Bug Flags**
+* **Bug Keywords**
 * **PM Score**
 * **Component Priority**
 
 Complete implementation and details can be found in `pkg/classifiers` package.
 
 Each classifier can be configured via `config.yaml` file. Most of them assign "score" to each pull request. The score is additive, so in the example
-below, an "urgent" bug with *TestBlocker* flag will get score `1.8` which will likely put it at the top of the list.
+below, an "urgent" bug with *TestBlocker* keyword will get score `1.8` which will likely put it at the top of the list.
 
 #### Example config.yaml:
 
@@ -51,8 +51,8 @@ capacity:
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:
-  # Flags classifier assign score based on bugzilla flags present in bug associated with pull request
-  flags:
+  # Keywords classifier assign score based on bugzilla keywords present in bug associated with pull request
+  keywords:
     "TestBlocker": 0.8
     "UpgradeBlocker": 0.8
     "Security": 0.5
