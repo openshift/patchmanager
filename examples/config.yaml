@@ -36,7 +36,9 @@ classifiers:
   keywords:
     "TestBlocker": 0.8
     "UpgradeBlocker": 0.8
+    "ServiceDeliveryBlocker": 0.8
     "Security": 0.5
+    "ServiceDeliveryImpact": 0.4
   components:
     "authentication": 0.5
     "networking": 0.5
