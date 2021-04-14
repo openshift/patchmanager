@@ -187,8 +187,14 @@ func (r *runOptions) Run(ctx context.Context) error {
 		// increment capacity counter for this component
 		capacity.inc(componentName(p.Bug().Component))
 
-		// if component has no capacity to take this pick
-		if !capacity.hasCapacity(componentName(p.Bug().Component)) {
+		if p.Score < 0.0 {
+			// if the component has a negative score, it is unlikely this PR is meeting a important criteria
+			decision = "skip"
+			decisionReason = fmt.Sprintf("automated classifiers have given this PR a negative score meaning that " +
+				"it does not meet important merge criteria for this release; if you believe this PR is an exception, " +
+				"please contact @patch-manager in coreos Slack")
+		} else if !capacity.hasCapacity(componentName(p.Bug().Component)) {
+			// if component has no capacity to take this pick
 			decision = "skip"
 			_, componentCapacity := config.ComponentCapacity(&r.config.CapacityConfig, componentName(p.Bug().Component))
 			decisionReason = fmt.Sprintf("maximum allowed picks for component %s is %d", componentName(p.Bug().Component), componentCapacity)
