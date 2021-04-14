@@ -33,10 +33,12 @@ capacity:
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:
-  flags:
+  keywords:
     "TestBlocker": 0.8
     "UpgradeBlocker": 0.8
+    "ServiceDeliveryBlocker": 0.8
     "Security": 0.5
+    "ServiceDeliveryImpact": 0.4
   components:
     "authentication": 0.5
     "networking": 0.5

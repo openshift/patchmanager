@@ -109,7 +109,7 @@ func (r *runOptions) Complete() error {
 	r.classifier = classifiers.NewMultiClassifier(
 		&classifiers.SeverityClassifier{Config: &r.config.ClassifiersConfigs.Severities},
 		&classifiers.ComponentClassifier{Config: &r.config.ClassifiersConfigs.ComponentClassifier},
-		&classifiers.FlagsClassifier{Config: &r.config.ClassifiersConfigs.FlagsClassifier},
+		&classifiers.KeywordsClassifier{Config: &r.config.ClassifiersConfigs.KeywordsClassifier},
 		&classifiers.ProductManagementScoreClassifier{Config: &r.config.ClassifiersConfigs.PMScores},
 	)
 	return nil
