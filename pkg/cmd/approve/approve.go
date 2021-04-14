@@ -182,7 +182,7 @@ func (r *approveOptions) Run(ctx context.Context) error {
 			skipCommentMsg = fmt.Sprintf("\n*%s*\n", r.skipComment)
 		}
 		if err := approver.Comment(ctx, pr.PullRequest.URL, fmt.Sprintf(`
-:hourglass: This pull request was not picked by the patch manager for the current z-stream window and have to wait for the next window%s.
+[patch-manager] :hourglass: This pull request was not picked by the patch manager for the current z-stream window and have to wait for the next window%s.
 %s
 * Score: *%0.2f*
 * Reason: *%s*
@@ -192,6 +192,7 @@ func (r *approveOptions) Run(ctx context.Context) error {
 			mergeWindowMsg, skipCommentMsg, pr.PullRequest.Score, pr.PullRequest.DecisionReason)); err != nil {
 			klog.Errorf("Failed to comment on pull request %q: %v", pr.PullRequest.URL, err)
 		}
+		fmt.Fprintf(os.Stdout, "-> Commenting on skipping %s ...\n", pr.PullRequest.URL)
 	}
 
 	for _, pr := range approved {
@@ -207,7 +208,9 @@ func (r *approveOptions) Run(ctx context.Context) error {
 		if len(r.pickComment) > 0 {
 			pickCommentMsg = fmt.Sprintf("\n\n%s\n", r.pickComment)
 		}
-		if err := approver.Comment(ctx, pr.PullRequest.URL, fmt.Sprintf(":rocket: Approved for z-stream by score: %0.2f%s", pr.PullRequest.Score, pickCommentMsg)); err != nil {
+
+		fmt.Fprintf(os.Stdout, "-> Commenting on approval of %s ...\n", pr.PullRequest.URL)
+		if err := approver.Comment(ctx, pr.PullRequest.URL, fmt.Sprintf("[patch-manager] :rocket: Approved for z-stream by score: %0.2f%s", pr.PullRequest.Score, pickCommentMsg)); err != nil {
 			klog.Errorf("Failed to comment on pull request %q: %v", pr.PullRequest.URL, err)
 		}
 	}
