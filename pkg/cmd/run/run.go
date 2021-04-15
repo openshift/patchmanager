@@ -139,7 +139,7 @@ func componentName(p []string) string {
 }
 
 func (r *runOptions) Run(ctx context.Context) error {
-	pullsToReview, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListForRelease(ctx, r.release)
+	pullsToReview, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListCandidatesForRelease(ctx, r.release)
 	if err != nil {
 		return err
 	}
