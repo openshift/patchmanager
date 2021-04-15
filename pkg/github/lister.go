@@ -30,46 +30,49 @@ func NewPullRequestLister(ctx context.Context, ghToken string, bzToken string) *
 	}
 }
 
-func (l *PullRequestLister) ListForRelease(ctx context.Context, release string) ([]*PullRequest, error) {
-	pendingQuery := buildGithubSearchQuery(queryTemplate, release) + " -label:cherry-pick-approved"
-
-	var pendingIssues []*PullRequest
-
-	result, _, err := l.ghClient.Search.Issues(ctx, pendingQuery, &github.SearchOptions{Sort: "updated", ListOptions: github.ListOptions{PerPage: 150}})
+func (l *PullRequestLister) ListForRelease(ctx context.Context, release, labels string) ([]*PullRequest, error) {
+	query := buildGithubSearchQuery(queryTemplate, release) + " " + labels
+	result, _, err := l.ghClient.Search.Issues(ctx, query, &github.SearchOptions{Sort: "updated", ListOptions: github.ListOptions{PerPage: 150}})
 	if err != nil {
 		return nil, err
 	}
-
+	var pullRequests []*PullRequest
 	for i := range result.Issues {
 		if !result.Issues[i].IsPullRequest() {
 			continue
 		}
 
-		newPendingPullRequest := &PullRequest{
+		newPullRequest := &PullRequest{
 			Issue: *result.Issues[i],
 			Score: 0,
 		}
+		bugNumber := parseBugNumber(newPullRequest.Issue.GetTitle())
 
-		bugNumber := parseBugNumber(newPendingPullRequest.Issue.GetTitle())
-
-		if newPendingPullRequest.bugID, err = strconv.Atoi(bugNumber); len(bugNumber) == 0 || err != nil {
-			fmt.Printf("WARNING: Pull Request with invalid title: %s: %s (%v)\n", newPendingPullRequest.Issue.GetHTMLURL(), newPendingPullRequest.Issue.GetTitle(), err)
+		if newPullRequest.bugID, err = strconv.Atoi(bugNumber); len(bugNumber) == 0 || err != nil {
+			fmt.Printf("WARNING: Pull Request with invalid title: %s: %s (%v)\n", newPullRequest.Issue.GetHTMLURL(), newPullRequest.Issue.GetTitle(), err)
 			continue
 		}
-
-		newPendingPullRequest.getBugFn = func(id int) *bugzilla.Bug {
+		newPullRequest.getBugFn = func(id int) *bugzilla.Bug {
 			bz, err := l.bzClient.GetBug(id)
 			if err != nil {
-				fmt.Printf("Failed to fetch bug #%d for %s: %s\n", id, newPendingPullRequest.Issue.GetHTMLURL(), err)
+				fmt.Printf("Failed to fetch bug #%d for %s: %s\n", id, newPullRequest.Issue.GetHTMLURL(), err)
 				return nil
 			}
 			return bz
 		}
 
-		pendingIssues = append(pendingIssues, newPendingPullRequest)
+		pullRequests = append(pullRequests, newPullRequest)
 	}
 
-	return pendingIssues, nil
+	return pullRequests, nil
+}
+
+func (l *PullRequestLister) ListApprovedForRelease(ctx context.Context, release string) ([]*PullRequest, error) {
+	return l.ListForRelease(ctx, release, "label:cherry-pick-approved")
+}
+
+func (l *PullRequestLister) ListCandidatesForRelease(ctx context.Context, release string) ([]*PullRequest, error) {
+	return l.ListForRelease(ctx, release, "-label:cherry-pick-approved")
 }
 
 // parseBugNumber takes pull request title "Bug ####: Description" and return the ####
