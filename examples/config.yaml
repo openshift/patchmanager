@@ -9,12 +9,10 @@ capacity:
   maxDefaultPicksPerComponent: 5
   maxTotalPicks: 50
   groups:
-    - name: Core
-      capacity: 5
+    - name: Apiserver and Auth
+      capacity: 7
       components:
-      - Master
       - apiserver-auth
-      - authentication
       - service-ca
       - openshift-apiserver
       - oauth-apiserver
@@ -25,11 +23,131 @@ capacity:
     - name: Workloads
       capacity: 5
       components:
-      - Deployments
-      - Command Line Interface
       - oc
       - kube-controller-manager
       - kube-scheduler
+    - name: Etcd
+      capacity: 3
+      components:
+      - Etcd
+      - Etcd operator
+    - name: Container Engine Tools
+      capacity: 1
+      components:
+      - Containers
+    - name: Node
+      capacity: 5
+      components:
+      - Autoscaler
+      - CPU Manager
+      - CRI-O
+      - Kubelet
+      - Memory manager
+      - Numa aware scheduling
+      - POD resource API
+      - Topology manager
+    - name: Cluster Infrastructure
+      capacity: 6
+      components:
+      - Cloud Compute
+    - name: PSAP
+      capacity: 4
+      components:
+      - Special Resource Operator
+      - ISV Operators
+      - Node Feature Discovery Operator
+      - Node Tuning Operator
+    - name: SDN
+      capacity: 9
+      components:
+      - openshift-sdn
+      - ovn-kubernetes
+      - multus
+      - SR-IOV
+      - PTP
+    - name: Network Edge
+      capacity: 3
+      components:
+      - routing
+      - dns
+    - name: Storage
+      capacity: 6
+      components:
+      - Storage
+    - name: Logging
+      capacity: 6
+      components:
+      - Logging
+    - name: Build API
+      capacity: 3
+      components:
+      - Build
+      - Openshift-controller-manager
+      - Samples
+      - Templates
+    - name: Admin Console
+      capacity: 8
+      components:
+      - Management Console
+      - Console Metal3 Plugin
+    - name: Cluster Observability
+      capacity: 8
+      components:
+      - Monitoring
+      - Telemeter
+    - name: Metering
+      capacity: 2
+      components:
+      - Metering Operator
+    - name: ISV Operators
+      capacity: 6
+      components:
+      - ISV Operators
+    - name: OLM
+      capacity: 8
+      components:
+      - OLM
+      - OperatorHub
+    - name: Operator SDK
+      capacity: 5
+      components: 
+      - Operator SDK
+    - name: Image Registry
+      capacity: 3
+      components:
+      - Image Registry
+      - ImageStreams
+    - name: Cluster Operator
+      capacity: 3
+      components:
+      - Cloud Credential Operator
+      - Hive
+    - name: Installer
+      capacity: 8
+      components:
+      - Installer
+    - name: Over the Air
+      capacity: 3
+      components:
+      - Cluster Version Operator
+      - Openshift Update Service
+    - name: Windows Containers
+      capacity: 3
+      components:
+      - Windows Containers
+    - name: RHCOS
+      capacity: 1
+      components:
+      - RHCOS
+    - name: MCO
+      capacity: 1
+      components:
+      - Machine Config Operator
+    - name: Infrastructure Security and Compliance
+      capacity: 5
+      components:
+      - Compliance Operator
+      - File Integrity Operator
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:
