@@ -157,6 +157,7 @@ classifiers:
     "ServiceDeliveryBlocker": 0.8
     "Security": 0.5
     "ServiceDeliveryImpact": 0.4
+    "FastFix": 1.0
   components:
     "authentication": 0.5
     "networking": 0.5
