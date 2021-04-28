@@ -106,6 +106,10 @@ func (r *runOptions) Complete() error {
 		return fmt.Errorf("unable to get config file %q: %v", r.configFile, err)
 	}
 
+	if r.config.CapacityConfig.MaximumTotalPicks != 0 {
+		r.maxPicks = r.config.CapacityConfig.MaximumTotalPicks
+	}
+
 	r.classifier = classifiers.NewMultiClassifier(
 		&classifiers.SeverityClassifier{Config: &r.config.ClassifiersConfigs.Severities},
 		&classifiers.ComponentClassifier{Config: &r.config.ClassifiersConfigs.ComponentClassifier},
