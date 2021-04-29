@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -252,22 +253,19 @@ func (r *runOptions) Run(ctx context.Context) error {
 	printer.Print(metrics)
 	fmt.Println()
 
-	output := os.Stdout
+	// to file
 	if len(r.outFile) > 0 {
-		output, err = os.OpenFile(r.outFile, os.O_CREATE|os.O_WRONLY, 0666)
-		if err != nil {
+		if err := ioutil.WriteFile(r.outFile, out, os.ModePerm); err != nil {
 			return err
 		}
 		klog.Infof("Result saved to %q", r.outFile)
+		return nil
 	}
 
-	if _, err = fmt.Fprintf(output, "%s\n", string(out)); err != nil {
+	// standard output
+	if _, err = fmt.Fprintf(os.Stdout, "%s\n", string(out)); err != nil {
 		return err
 	}
-	if len(r.outFile) > 0 {
-		return output.Sync()
-	}
-
 	return nil
 }
 
