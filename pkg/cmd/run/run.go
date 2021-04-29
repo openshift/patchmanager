@@ -30,9 +30,11 @@ type runOptions struct {
 	release        string
 	outFile        string
 
-	maxPicks   int
 	configFile string
 	config     *config.PatchManagerConfig
+
+	useCapacityPercent int
+	useCapacityCount   int
 
 	classifier classifiers.Classifier
 }
@@ -66,8 +68,8 @@ func (r *runOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.bugzillaAPIKey, "bugzilla-apikey", "", "Bugzilla API Key (BUGZILLA_APIKEY env variable)")
 	fs.StringVar(&r.release, "release", "", "Target release (eg. 4.6, 4.7, etc...)")
 	fs.StringVar(&r.configFile, "config", os.Getenv("PATCHMANAGER_CONFIG"), "Path to a config file (PATCHMANAGER_CONFIG env variable)")
-	fs.IntVar(&r.maxPicks, "max-pick", 10, "Set the default maxPicks to approve if config file is not used or default maxPicks is not set")
 	fs.StringVarP(&r.outFile, "output", "o", "", "Set output file instead of standard output")
+	fs.IntVar(&r.useCapacityPercent, "use-capacity-percent", 100, "How much capacity should be used to pick PR's (0-100)")
 }
 
 func (r *runOptions) Validate() error {
@@ -80,11 +82,11 @@ func (r *runOptions) Validate() error {
 	if len(r.release) == 0 {
 		return fmt.Errorf("release flag must be set (eg: --release=4.7)")
 	}
-	if r.maxPicks <= 0 {
-		return fmt.Errorf("maxPicks must be above 0")
-	}
 	if len(r.configFile) == 0 {
 		return fmt.Errorf("need to specify valid config file")
+	}
+	if r.useCapacityPercent > 100 || r.useCapacityPercent < 0 {
+		return fmt.Errorf("use-capacity-percent value must be between 0 and 100 (percent)")
 	}
 	return nil
 }
@@ -106,16 +108,17 @@ func (r *runOptions) Complete() error {
 		return fmt.Errorf("unable to get config file %q: %v", r.configFile, err)
 	}
 
-	if r.config.CapacityConfig.MaximumTotalPicks != 0 {
-		r.maxPicks = r.config.CapacityConfig.MaximumTotalPicks
-	}
-
 	r.classifier = classifiers.NewMultiClassifier(
 		&classifiers.SeverityClassifier{Config: &r.config.ClassifiersConfigs.Severities},
 		&classifiers.ComponentClassifier{Config: &r.config.ClassifiersConfigs.ComponentClassifier},
 		&classifiers.KeywordsClassifier{Config: &r.config.ClassifiersConfigs.KeywordsClassifier},
 		&classifiers.ProductManagementScoreClassifier{Config: &r.config.ClassifiersConfigs.PMScores},
 	)
+
+	// calculate how much PR's would be approved based on the "use capacity" percent
+	r.useCapacityCount = int((float32(r.config.CapacityConfig.MaximumTotalPicks) * 0.01) * float32(r.useCapacityPercent))
+	klog.Infof("Using %d%% of total QE capacity of %d PR's approved for ALL z-stream releases (max. %d picked)", r.useCapacityPercent, r.config.CapacityConfig.MaximumTotalPicks, r.useCapacityCount)
+
 	return nil
 }
 
@@ -151,7 +154,6 @@ func (r *runOptions) Run(ctx context.Context) error {
 	if capacity := len(r.config.CapacityConfig.Groups); capacity > 0 {
 		klog.Infof("Capacity configuration for %d groups loaded (default per component: %d)", capacity, r.config.CapacityConfig.MaximumDefaultPicksPerComponent)
 	}
-	klog.Infof("Maximum allowed pull requests to pick is %d", r.maxPicks)
 
 	// assign score to each pull request by running it trough set of classifiers
 	progress := pb.StartNew(len(pullsToReview))
@@ -208,9 +210,9 @@ func (r *runOptions) Run(ctx context.Context) error {
 		if decision == "pick" {
 			totalPicks++
 		}
-		if totalPicks > r.maxPicks {
+		if totalPicks > r.useCapacityCount {
 			decision = "skip"
-			decisionReason = fmt.Sprintf("maximum total for this z-stream is %d", r.maxPicks)
+			decisionReason = fmt.Sprintf("maximum QE capacity for all z-stream is %d", r.config.CapacityConfig.MaximumTotalPicks)
 		}
 
 		if decision == "pick" {
