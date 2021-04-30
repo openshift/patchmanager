@@ -162,7 +162,8 @@ items:
    The `decisionReason` field will be used in a comment if `-add-comment` flag is specified (see below).
    
 3. Once you are done editing YAML file, you can run the `patchmanager approve --config=path/to/config.yaml -f candidates.yaml` command which will apply the `cherry-pick-approved` label
-  on ALL pull requests with "pick" decision. Use the `--add-comment` flag if you want to leave a comment with score and reason for every approved or skipped pull request.
+   on ALL pull requests with "pick" decision. If `--skip-comment` or/and `--pick-comment` are set, then a comment will be made to the PR about decision reason. If these are not used,
+   not comment will be made on PR.
    
 4. Alternatively, you can use `patchmanager list -f candidates.yaml` to format the pull requests in human readable table:
 

@@ -27,7 +27,6 @@ type approveOptions struct {
 	inFile      string
 	config      *config.PatchManagerConfig
 	configFile  string
-	comment     bool
 	skipComment string
 	pickComment string
 }
@@ -61,9 +60,8 @@ func (r *approveOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&r.inFile, "file", "f", "", "Set input file to read the list of candidates")
 	fs.BoolVar(&r.force, "force", false, "Do not ask stupid questions and ship it")
 	fs.StringVar(&r.configFile, "config", os.Getenv("PATCHMANAGER_CONFIG"), "Path to a config file (PATCHMANAGER_CONFIG env variable)")
-	fs.BoolVar(&r.comment, "add-comment", false, "Provide informative comment about decision to all pull requests")
-	fs.StringVar(&r.skipComment, "skip-comment", "", "Message to include in all skipped pull requests")
-	fs.StringVar(&r.pickComment, "pick-comment", "", "Message to include in all picked pull requests")
+	fs.StringVar(&r.skipComment, "skip-comment", "", "Message to include in all skipped pull requests (if not set, no comment is made on skipping a PR)")
+	fs.StringVar(&r.pickComment, "pick-comment", "", "Message to include in all picked pull requests (if not set, no comment is made on picking a PR)")
 }
 
 func (r *approveOptions) Validate() error {
@@ -102,6 +100,13 @@ Do you wish to continue? (y/n): `, r.config.MergeWindowConfig.From, r.config.Mer
 			fmt.Println()
 			os.Exit(0)
 		}
+	}
+
+	if len(r.skipComment) == 0 {
+		klog.Warning("WARNING: The --skip-comment flag is not used, no comment will be made to skipped PR's")
+	}
+	if len(r.pickComment) == 0 {
+		klog.Warningf("WARNING: The --pick-comment flag is not used, no comment will be made to picked PR's")
 	}
 
 	return nil
@@ -170,7 +175,8 @@ func (r *approveOptions) Run(ctx context.Context) error {
 	}
 
 	for _, pr := range skipped {
-		if !r.comment {
+		// if there is no skip comment, skip commenting on PR
+		if len(r.skipComment) == 0 {
 			continue
 		}
 		mergeWindowMsg := ""
@@ -201,7 +207,8 @@ func (r *approveOptions) Run(ctx context.Context) error {
 			klog.Errorf("Failed to approve pull request %q: %v", pr.PullRequest.URL, err)
 		}
 
-		if !r.comment {
+		// if there is no pick comment, skip commenting on PR
+		if len(r.pickComment) == 0 {
 			continue
 		}
 		pickCommentMsg := ""
