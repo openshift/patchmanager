@@ -60,11 +60,7 @@ capacity:
     - name: SDN
       capacity: 9
       components:
-      - openshift-sdn
-      - ovn-kubernetes
-      - multus
-      - SR-IOV
-      - PTP
+      - networking
     - name: Network Edge
       capacity: 3
       components:
