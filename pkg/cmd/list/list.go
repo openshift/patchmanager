@@ -6,16 +6,17 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-
-	githubapi "github.com/google/go-github/v32/github"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
+	githubapi "github.com/google/go-github/v32/github"
 	"github.com/lensesio/tableprinter"
 	v1 "github.com/openshift/patchmanager/pkg/api/v1"
 	"github.com/openshift/patchmanager/pkg/github"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	str2duration "github.com/xhit/go-str2duration/v2"
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog/v2"
 )
@@ -28,6 +29,8 @@ type listOptions struct {
 	release        string
 	githubToken    string
 	bugzillaAPIKey string
+	since          string
+	sinceTime      *time.Time
 }
 
 // NewListCommand creates a render command.
@@ -61,6 +64,7 @@ func (r *listOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.release, "release", "", "Release to use to list candidates")
 	fs.BoolVar(&r.candidates, "candidates", false, "List candidate PR's for a release")
 	fs.BoolVar(&r.approved, "approved", false, "List approved PR's for a release")
+	fs.StringVar(&r.since, "since", "", "Restrict the list of approved based on time period (eg. 7d)")
 }
 
 func (r *listOptions) Validate() error {
@@ -81,6 +85,15 @@ func (r *listOptions) Complete() error {
 	}
 	if len(r.githubToken) == 0 {
 		r.githubToken = os.Getenv("GITHUB_TOKEN")
+	}
+
+	if len(r.since) > 0 {
+		d, err := str2duration.ParseDuration(r.since)
+		if err != nil {
+			return fmt.Errorf("failed to parse relative time for --since: %v", err)
+		}
+		sinceTime := time.Now().Add(-d)
+		r.sinceTime = &sinceTime
 	}
 	return nil
 }
@@ -148,7 +161,7 @@ func stringifyLabels(labels []*githubapi.Label) string {
 }
 
 func (r *listOptions) RunListApproved(ctx context.Context) error {
-	approved, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListApprovedForRelease(ctx, r.release)
+	approved, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListApprovedForRelease(ctx, r.release, r.sinceTime)
 	if err != nil {
 		return err
 	}
@@ -157,7 +170,7 @@ func (r *listOptions) RunListApproved(ctx context.Context) error {
 	for _, c := range approved {
 		out = append(out, pull{
 			URL:    c.Issue.GetHTMLURL(),
-			Status: fmt.Sprintf("lastUpdate=%v\nlabels=%s", humanize.Time(c.Issue.GetUpdatedAt()), stringifyLabels(c.Issue.Labels)),
+			Status: fmt.Sprintf("%s %v\nlabels=%s", strings.ToUpper(c.Issue.GetState()), humanize.Time(c.Issue.GetUpdatedAt()), stringifyLabels(c.Issue.Labels)),
 		})
 	}
 	printer.Print(out)

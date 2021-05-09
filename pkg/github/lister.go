@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/eparis/bugzilla"
 
@@ -13,8 +14,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const queryTemplate = "org:kube-reporting org:openshift org:operator-framework label:lgtm label:approved label:bugzilla/valid-bug " +
-	"base:release-%[1]s base:openshift-%[1]s base:enterprise-%[1]s is:open -repo:openshift/openshift-docs"
+const baseQueryTemplate = "org:kube-reporting org:openshift org:operator-framework label:lgtm label:approved label:bugzilla/valid-bug " +
+	"base:release-%[1]s base:openshift-%[1]s base:enterprise-%[1]s is:pr -repo:openshift/openshift-docs"
 
 type PullRequestLister struct {
 	ghClient *github.Client
@@ -30,24 +31,30 @@ func NewPullRequestLister(ctx context.Context, ghToken string, bzToken string) *
 	}
 }
 
-func (l *PullRequestLister) ListForRelease(ctx context.Context, release, labels string) ([]*PullRequest, error) {
-	query := buildGithubSearchQuery(queryTemplate, release) + " " + labels
+func (l *PullRequestLister) searchIssues(ctx context.Context, query string, filterFn func(issue *github.Issue) bool) ([]*github.Issue, error) {
 	result, _, err := l.ghClient.Search.Issues(ctx, query, &github.SearchOptions{Sort: "updated", ListOptions: github.ListOptions{PerPage: 150}})
 	if err != nil {
 		return nil, err
 	}
-	var pullRequests []*PullRequest
+	var issues []*github.Issue
 	for i := range result.Issues {
-		if !result.Issues[i].IsPullRequest() {
+		if filterFn != nil && !filterFn(result.Issues[i]) {
 			continue
 		}
+		issues = append(issues, result.Issues[i])
+	}
+	return issues, nil
+}
 
+func (l *PullRequestLister) issuesToPullRequest(issues []*github.Issue) []*PullRequest {
+	var result []*PullRequest
+	for i := range issues {
 		newPullRequest := &PullRequest{
-			Issue: *result.Issues[i],
+			Issue: *issues[i],
 			Score: 0,
 		}
 		bugNumber := parseBugNumber(newPullRequest.Issue.GetTitle())
-
+		var err error
 		if newPullRequest.bugID, err = strconv.Atoi(bugNumber); len(bugNumber) == 0 || err != nil {
 			fmt.Printf("WARNING: Pull Request with invalid title: %s: %s (%v)\n", newPullRequest.Issue.GetHTMLURL(), newPullRequest.Issue.GetTitle(), err)
 			continue
@@ -61,18 +68,37 @@ func (l *PullRequestLister) ListForRelease(ctx context.Context, release, labels 
 			return bz
 		}
 
-		pullRequests = append(pullRequests, newPullRequest)
+		result = append(result, newPullRequest)
 	}
-
-	return pullRequests, nil
+	return result
 }
 
-func (l *PullRequestLister) ListApprovedForRelease(ctx context.Context, release string) ([]*PullRequest, error) {
-	return l.ListForRelease(ctx, release, "label:cherry-pick-approved")
+func (l *PullRequestLister) ListOpenForRelease(ctx context.Context, release, labels string) ([]*PullRequest, error) {
+	query := buildGithubSearchQuery(baseQueryTemplate, release) + " is:open " + labels
+	issues, err := l.searchIssues(ctx, query, nil)
+	if err != nil {
+		return nil, err
+	}
+	return l.issuesToPullRequest(issues), nil
+}
+
+func (l *PullRequestLister) ListApprovedForRelease(ctx context.Context, release string, since *time.Time) ([]*PullRequest, error) {
+	query := buildGithubSearchQuery(baseQueryTemplate, release) + " label:cherry-pick-approved"
+	if since != nil {
+		query += " updated:" + fmt.Sprintf("%d-%.2d-%d", since.Year(), since.Month(), since.Day())
+		fmt.Printf("q: %v\n", query)
+	}
+	issues, err := l.searchIssues(ctx, query, func(issue *github.Issue) bool {
+		return issue.IsPullRequest()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return l.issuesToPullRequest(issues), nil
 }
 
 func (l *PullRequestLister) ListCandidatesForRelease(ctx context.Context, release string) ([]*PullRequest, error) {
-	return l.ListForRelease(ctx, release, "-label:cherry-pick-approved")
+	return l.ListOpenForRelease(ctx, release, "-label:cherry-pick-approved")
 }
 
 // parseBugNumber takes pull request title "Bug ####: Description" and return the ####

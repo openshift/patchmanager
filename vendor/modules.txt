@@ -24,6 +24,7 @@ github.com/enriquebris/goworkerpool
 ## explicit
 github.com/eparis/bugzilla
 # github.com/fatih/color v1.7.0
+## explicit
 github.com/fatih/color
 # github.com/go-logr/logr v0.2.0
 github.com/go-logr/logr
@@ -87,6 +88,9 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit
 github.com/spf13/pflag
+# github.com/xhit/go-str2duration/v2 v2.0.0
+## explicit
+github.com/xhit/go-str2duration/v2
 # go.uber.org/atomic v1.4.0
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
