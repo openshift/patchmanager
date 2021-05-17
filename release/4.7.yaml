@@ -145,6 +145,10 @@ capacity:
       components:
       - Compliance Operator
       - File Integrity Operator
+rules:
+  labels:
+    refuse:
+      - do-not-merge/
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:

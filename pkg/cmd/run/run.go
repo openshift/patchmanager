@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/openshift/patchmanager/pkg/rule"
+
 	"github.com/cheggaaa/pb/v3"
 	"github.com/lensesio/tableprinter"
 
@@ -38,6 +40,7 @@ type runOptions struct {
 	useCapacityCount   int
 
 	classifier classifiers.Classifier
+	rules      rule.Ruler
 }
 
 // NewRunCommand creates a render command.
@@ -116,6 +119,10 @@ func (r *runOptions) Complete() error {
 		&classifiers.ProductManagementScoreClassifier{Config: &r.config.ClassifiersConfigs.PMScores},
 	)
 
+	r.rules = rule.NewMultiRuler(
+		&rule.PullRequestLabelRule{Config: &r.config.RulesConfig.PullRequestLabelConfig},
+	)
+
 	// calculate how much PR's would be approved based on the "use capacity" percent
 	r.useCapacityCount = int((float32(r.config.CapacityConfig.MaximumTotalPicks) * 0.01) * float32(r.useCapacityPercent))
 	klog.Infof("Using %d%% of total QE capacity of %d PR's approved for ALL z-stream releases (max. %d picked)", r.useCapacityPercent, r.config.CapacityConfig.MaximumTotalPicks, r.useCapacityCount)
@@ -171,9 +178,32 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 	progress.Finish()
 
+	candidates := []v1.Candidate{}
+
+	pullsToClassify := []*github.PullRequest{}
+	for i, p := range pullsToReview {
+		decisions, ok := r.rules.Evaluate(pullsToReview[i])
+		if ok {
+			pullsToClassify = append(pullsToClassify, pullsToReview[i])
+			continue
+		}
+		candidates = append(candidates, v1.Candidate{
+			PMScore:        p.Bug().PMScore,
+			Score:          0,
+			Description:    p.Bug().Summary,
+			PullRequestURL: p.Issue.GetHTMLURL(),
+			BugNumber:      fmt.Sprintf("%d", p.Bug().ID),
+			Component:      componentName(p.Bug().Component),
+			Severity:       p.Bug().Severity,
+			Decision:       "skip",
+			DecisionReason: strings.Join(decisions, ","),
+		})
+	}
+	klog.Infof("%d pull requests refused by the rules", len(candidates))
+
 	// order the pending pull requests by score
-	sort.Slice(pullsToReview, func(i, j int) bool {
-		return pullsToReview[i].Score > pullsToReview[j].Score
+	sort.Slice(pullsToClassify, func(i, j int) bool {
+		return pullsToClassify[i].Score > pullsToClassify[j].Score
 	})
 
 	capacity := &capacityTracker{
@@ -184,10 +214,9 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 
 	// decide which pull requests we are going to pick based on the componentCounter
-	candidates := []v1.Candidate{}
 	totalPicks := 0
 
-	for _, p := range pullsToReview {
+	for _, p := range pullsToClassify {
 		decision := "pick"
 		decisionReason := fmt.Sprintf("picked for z-stream with score %0.2f", p.Score)
 
