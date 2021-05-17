@@ -80,9 +80,6 @@ func (r *runOptions) Validate() error {
 	if len(r.githubToken) == 0 {
 		return fmt.Errorf("github-token flag must be specified or GITHUB_TOKEN environment must be set")
 	}
-	if len(r.release) == 0 {
-		return fmt.Errorf("release flag must be set (eg: --release=4.7)")
-	}
 	if len(r.configFile) == 0 {
 		return fmt.Errorf("need to specify valid config file")
 	}
@@ -107,6 +104,9 @@ func (r *runOptions) Complete() error {
 	r.config, err = config.GetConfig(r.configFile)
 	if err != nil {
 		return fmt.Errorf("unable to get config file %q: %v", r.configFile, err)
+	}
+	if len(r.config.Release) > 0 && len(r.release) == 0 {
+		r.release = r.config.Release
 	}
 
 	r.classifier = classifiers.NewMultiClassifier(

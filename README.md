@@ -94,7 +94,7 @@ component will be picked.
 
 * You will need [Github Personal Token](https://github.com/settings/tokens) exported via environment variable `GITHUB_TOKEN` (or use command flag).
 * You will need [Bugzilla API Token](https://bugzilla.redhat.com/userprefs.cgi?tab=apikey) exported via environment variable `BUGZILLA_APIKEY` (or use command flag).
-* You need a config file (check examples/ directory). You can also use `PATCHMANAGER_CONFIG=https://raw.githubusercontent.com/openshift/patchmanager/main/examples/config.yaml`
+* You need a config file (check release/ directory). You can also use `PATCHMANAGER_CONFIG=https://raw.githubusercontent.com/openshift/patchmanager/main/release/4.7.yaml`
 
 ## Installation
 
@@ -109,7 +109,7 @@ The binary `patchmanager` should be installed in your *$GOPATH/bin* directory.
 Alternatively you can use `podman` to run patchmanager. Example:
 
 ```
-podman run -it --env-host quay.io/mfojtik/patchmanager:latest patchmanager run --release=4.7
+podman run -it --env-host quay.io/mfojtik/patchmanager:latest patchmanager run 
 ```
 
 ### Development
@@ -118,7 +118,7 @@ In case you want to contribute, you can use *Makefile* to build the `patchmanage
 
 ## Usage
 
-1. Run `patchmanager run --release=4.x --config=path/to/config.yaml -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
+1. Run `patchmanager run --config=path/to/config.yaml -o candidates.yaml` will produce YAML file of candidate pull request for *4.x* release already sorted
   and scored based on the classifiers. The `capacity` flag will cause that on *N* pull requests will be "picked". (TIP: You can set the `PATCHMANAGER_CONFIG` environment variable
    which points to a config location)
   
