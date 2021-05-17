@@ -1,6 +1,7 @@
 package config
 
 type PatchManagerConfig struct {
+	Release            string            `yaml:"release"`
 	CapacityConfig     CapacityConfig    `yaml:"capacity"`
 	ClassifiersConfigs ClassifierConfig  `yaml:"classifiers"`
 	MergeWindowConfig  MergeWindowConfig `yaml:"mergeWindow"`

@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/openshift/patchmanager/pkg/config"
+
 	githubapi "github.com/google/go-github/v32/github"
 
 	"github.com/dustin/go-humanize"
@@ -28,6 +30,8 @@ type listOptions struct {
 	release        string
 	githubToken    string
 	bugzillaAPIKey string
+	config         *config.PatchManagerConfig
+	configFile     string
 }
 
 // NewListCommand creates a render command.
@@ -61,17 +65,14 @@ func (r *listOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.release, "release", "", "Release to use to list candidates")
 	fs.BoolVar(&r.candidates, "candidates", false, "List candidate PR's for a release")
 	fs.BoolVar(&r.approved, "approved", false, "List approved PR's for a release")
+	fs.StringVar(&r.configFile, "config", os.Getenv("PATCHMANAGER_CONFIG"), "Path to a config file (PATCHMANAGER_CONFIG env variable)")
 }
 
 func (r *listOptions) Validate() error {
 	if !r.approved && !r.candidates && len(r.inputFile) == 0 {
 		return fmt.Errorf("input file must be specified")
 	}
-	if r.approved || r.candidates {
-		if len(r.release) == 0 {
-			return fmt.Errorf("you must specify target release to list pr's (eg. --release=4.6)")
-		}
-	}
+
 	return nil
 }
 
@@ -79,8 +80,21 @@ func (r *listOptions) Complete() error {
 	if len(r.bugzillaAPIKey) == 0 {
 		r.bugzillaAPIKey = os.Getenv("BUGZILLA_APIKEY")
 	}
+	var err error
+	r.config, err = config.GetConfig(r.configFile)
+	if err != nil {
+		return fmt.Errorf("unable to get config file %q: %v", r.configFile, err)
+	}
 	if len(r.githubToken) == 0 {
 		r.githubToken = os.Getenv("GITHUB_TOKEN")
+	}
+	if len(r.config.Release) > 0 && len(r.release) == 0 {
+		r.release = r.config.Release
+	}
+	if r.approved || r.candidates {
+		if len(r.release) == 0 {
+			return fmt.Errorf("you must specify target release to list pr's (eg. --release=4.6)")
+		}
 	}
 	return nil
 }

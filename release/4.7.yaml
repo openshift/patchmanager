@@ -1,4 +1,5 @@
 ---
+release: 4.7
 # MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
 # Format is: YYYY-MM-DD
 mergeWindow:
