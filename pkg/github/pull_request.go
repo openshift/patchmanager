@@ -21,3 +21,12 @@ func (p *PullRequest) Bug() *bugzilla.Bug {
 	}
 	return p.bug
 }
+
+func (p *PullRequest) CheckQEApproved() bool {
+	for _, label := range p.Issue.Labels {
+		if label.GetName() == "qe-approved" {
+			return true
+		}
+	}
+	return false
+}

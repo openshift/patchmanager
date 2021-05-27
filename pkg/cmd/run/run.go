@@ -124,10 +124,11 @@ func (r *runOptions) Complete() error {
 }
 
 type capacityTracker struct {
-	config           *config.CapacityConfig
-	componentPicks   map[string]int
-	componentSkips   map[string]int
-	componentCounter map[string]int
+	config              *config.CapacityConfig
+	componentPicks      map[string]int
+	componentSkips      map[string]int
+	componentCounter    map[string]int
+	componentQEApproved map[string]int
 }
 
 func (c capacityTracker) inc(component string) {
@@ -194,32 +195,40 @@ func (r *runOptions) Run(ctx context.Context) error {
 		// increment capacity counter for this component
 		capacity.inc(componentName(p.Bug().Component))
 
-		if p.Score < 0.0 {
-			// if the component has a negative score, it is unlikely this PR is meeting a important criteria
-			decision = "skip"
-			decisionReason = fmt.Sprintf("automated classifiers have given this PR a negative score meaning that " +
-				"it does not meet important merge criteria for this release; if you believe this PR is an exception, " +
-				"please contact @patch-manager in coreos Slack")
-		} else if !capacity.hasCapacity(componentName(p.Bug().Component)) {
-			// if component has no capacity to take this pick
-			decision = "skip"
-			_, componentCapacity := config.ComponentCapacity(&r.config.CapacityConfig, componentName(p.Bug().Component))
-			decisionReason = fmt.Sprintf("maximum allowed picks for component %s is %d", componentName(p.Bug().Component), componentCapacity)
-		}
-
-		// if there are more picks than total picks allowed
-		if decision == "pick" {
+		qeApproved := p.CheckQEApproved()
+		// If the PR has been approved by QE, we can add it to the list of candidates without affecting the capacity
+		if qeApproved {
 			totalPicks++
-		}
-		if totalPicks > r.useCapacityCount {
-			decision = "skip"
-			decisionReason = fmt.Sprintf("maximum QE capacity for all z-stream is %d", r.config.CapacityConfig.MaximumTotalPicks)
-		}
-
-		if decision == "pick" {
-			capacity.componentPicks[componentName(p.Bug().Component)]++
+			capacity.componentQEApproved[componentName(p.Bug().Component)]++
+			decisionReason = "picked for z-stream as it was QE approved"
 		} else {
-			capacity.componentSkips[componentName(p.Bug().Component)]++
+			if p.Score < 0.0 {
+				// if the component has a negative score, it is unlikely this PR is meeting a important criteria
+				decision = "skip"
+				decisionReason = fmt.Sprintf("automated classifiers have given this PR a negative score meaning that " +
+					"it does not meet important merge criteria for this release; if you believe this PR is an exception, " +
+					"please contact @patch-manager in coreos Slack")
+			} else if !capacity.hasCapacity(componentName(p.Bug().Component)) {
+				// if component has no capacity to take this pick
+				decision = "skip"
+				_, componentCapacity := config.ComponentCapacity(&r.config.CapacityConfig, componentName(p.Bug().Component))
+				decisionReason = fmt.Sprintf("maximum allowed picks for component %s is %d", componentName(p.Bug().Component), componentCapacity)
+			}
+
+			// if there are more picks than total picks allowed
+			if decision == "pick" {
+				totalPicks++
+			}
+			if totalPicks > r.useCapacityCount {
+				decision = "skip"
+				decisionReason = fmt.Sprintf("maximum QE capacity for all z-stream is %d", r.config.CapacityConfig.MaximumTotalPicks)
+			}
+
+			if decision == "pick" {
+				capacity.componentPicks[componentName(p.Bug().Component)]++
+			} else {
+				capacity.componentSkips[componentName(p.Bug().Component)]++
+			}
 		}
 
 		// add to candidate list
@@ -244,10 +253,11 @@ func (r *runOptions) Run(ctx context.Context) error {
 	metrics := []componentMetric{}
 	for name, count := range capacity.componentCounter {
 		metrics = append(metrics, componentMetric{
-			Component: name,
-			Total:     count,
-			Picks:     capacity.componentPicks[name],
-			Skips:     capacity.componentSkips[name],
+			Component:  name,
+			Total:      count,
+			Picks:      capacity.componentPicks[name],
+			Skips:      capacity.componentSkips[name],
+			QEApproved: capacity.componentQEApproved[name],
 		})
 	}
 	printer := tableprinter.New(os.Stdout)
@@ -272,8 +282,9 @@ func (r *runOptions) Run(ctx context.Context) error {
 }
 
 type componentMetric struct {
-	Component string `header:"Component Name"`
-	Total     int    `header:"Total"`
-	Picks     int    `header:"Picks"`
-	Skips     int    `header:"Skips"`
+	Component  string `header:"Component Name"`
+	Total      int    `header:"Total"`
+	Picks      int    `header:"Picks"`
+	Skips      int    `header:"Skips"`
+	QEApproved int    `header:"QE Approved"`
 }
