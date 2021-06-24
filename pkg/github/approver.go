@@ -28,6 +28,15 @@ func (p *PullRequestApprover) CherryPickApprove(ctx context.Context, url string)
 	return err
 }
 
+func (p *PullRequestApprover) CherryPickRemove(ctx context.Context, url string) error {
+	owner, repo, number, err := parsePullRequestMeta(url)
+	if err != nil {
+		return err
+	}
+	_, err = p.client.Issues.RemoveLabelForIssue(ctx, owner, repo, number, "cherry-pick-approved")
+	return err
+}
+
 func (p *PullRequestApprover) Comment(ctx context.Context, url, comment string) error {
 	owner, repo, number, err := parsePullRequestMeta(url)
 	if err != nil {
