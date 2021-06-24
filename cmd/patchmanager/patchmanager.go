@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/openshift/patchmanager/pkg/cmd/cleanup"
+
 	"github.com/openshift/patchmanager/pkg/cmd/list"
 
 	"github.com/openshift/patchmanager/pkg/cmd/approve"
@@ -47,6 +49,7 @@ func NewPatchManagerCommand(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(run.NewRunCommand(ctx))
 	cmd.AddCommand(approve.NewApproveCommand(ctx))
 	cmd.AddCommand(list.NewListCommand(ctx))
+	cmd.AddCommand(cleanup.NewCleanupCommand(ctx))
 
 	return cmd
 }
