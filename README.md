@@ -15,7 +15,7 @@ Complete implementation and details can be found in `pkg/classifiers` package.
 Each classifier can be configured via `config.yaml` file. Most of them assign "score" to each pull request. The score is additive, so in the example
 below, an "urgent" bug with *TestBlocker* keyword will get score `1.8` which will likely put it at the top of the list.
 
-#### Example config.yaml:
+#### Example release config YAML:
 
 ```yaml
 ---
@@ -48,6 +48,13 @@ capacity:
       - oc
       - kube-controller-manager
       - kube-scheduler
+# Rules specify go/no-go rules to apply on every PR. These rules does not use classification/scoring, but make decisions directly
+# based on conditions
+rules:
+  labels:
+    # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
+    refuse:
+      - do-no-merge/hold
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:

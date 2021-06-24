@@ -4,6 +4,7 @@ type PatchManagerConfig struct {
 	Release            string            `yaml:"release"`
 	CapacityConfig     CapacityConfig    `yaml:"capacity"`
 	ClassifiersConfigs ClassifierConfig  `yaml:"classifiers"`
+	RulesConfig        RulesConfig       `yaml:"rules"`
 	MergeWindowConfig  MergeWindowConfig `yaml:"mergeWindow"`
 }
 
@@ -19,10 +20,17 @@ type MergeWindowConfig struct {
 	To   string `yaml:"to,omitempty"`
 }
 
+type RulesConfig struct {
+	PullRequestLabelConfig PullRequestLabelRuleConfig `yaml:"labels"`
+}
+
+type PullRequestLabelRuleConfig struct {
+	RefuseOnLabel []string `yaml:"refuse"`
+}
+
 type KeywordsClassifierConfig map[string]float32
 type ComponentClassifierConfig map[string]float32
 type SeverityClassifierConfig map[string]float32
-
 type PMScoreClassifierConfig []PMScoreRange
 
 type PMScoreRange struct {
