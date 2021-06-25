@@ -5,6 +5,13 @@ release: 4.7
 mergeWindow:
   from:
   to:
+# Rules specify go/no-go rules to apply on every PR. These rules does not use classification/scoring, but make decisions directly
+# based on conditions
+rules:
+  labels:
+    # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
+    refuse:
+      - do-not-merge/hold
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   maxDefaultPicksPerComponent: 5
