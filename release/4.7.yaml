@@ -12,6 +12,7 @@ rules:
     # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
     refuse:
       - do-not-merge/hold
+      - needs-rebase
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   maxDefaultPicksPerComponent: 5
