@@ -14,7 +14,7 @@ import (
 )
 
 const queryTemplate = "org:kube-reporting org:openshift org:operator-framework label:lgtm label:approved label:bugzilla/valid-bug " +
-	"base:release-%[1]s base:openshift-%[1]s base:enterprise-%[1]s is:open -repo:openshift/openshift-docs"
+	"base:release-%[1]s base:openshift-%[1]s base:enterprise-%[1]s is:open -repo:openshift/openshift-docs -label:do-not-merge/hold"
 
 type PullRequestLister struct {
 	ghClient *github.Client
