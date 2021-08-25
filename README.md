@@ -55,6 +55,10 @@ rules:
     # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
     refuse:
       - do-not-merge/hold
+    # Skip all issues which do not have a severity label in this list. Empty list accepts all severities.
+    permitSeverity:
+      - high
+      - urgent
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:

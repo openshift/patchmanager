@@ -26,6 +26,7 @@ type RulesConfig struct {
 
 type PullRequestLabelRuleConfig struct {
 	RefuseOnLabel []string `yaml:"refuse"`
+	PermitSeverity []string `yaml:"permitSeverity"`
 }
 
 type KeywordsClassifierConfig map[string]float32

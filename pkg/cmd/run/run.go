@@ -179,9 +179,16 @@ func (r *runOptions) Run(ctx context.Context) error {
 	progress.Finish()
 
 	candidates := []v1.Candidate{}
+	capacity := &capacityTracker{
+		config:           &r.config.CapacityConfig,
+		componentCounter: map[string]int{},
+		componentPicks:   map[string]int{},
+		componentSkips:   map[string]int{},
+	}
 
 	pullsToClassify := []*github.PullRequest{}
 	for i, p := range pullsToReview {
+		capacity.componentCounter[componentName(p.Bug().Component)] = 0
 		decisions, ok := r.rules.Evaluate(pullsToReview[i])
 		if ok {
 			pullsToClassify = append(pullsToClassify, pullsToReview[i])
@@ -196,8 +203,9 @@ func (r *runOptions) Run(ctx context.Context) error {
 			Component:      componentName(p.Bug().Component),
 			Severity:       p.Bug().Severity,
 			Decision:       "skip",
-			DecisionReason: strings.Join(decisions, ","),
+			DecisionReason: strings.Join(decisions, ", "),
 		})
+		capacity.componentSkips[componentName(p.Bug().Component)]++
 	}
 	klog.Infof("%d pull requests refused by the rules", len(candidates))
 
@@ -205,13 +213,6 @@ func (r *runOptions) Run(ctx context.Context) error {
 	sort.Slice(pullsToClassify, func(i, j int) bool {
 		return pullsToClassify[i].Score > pullsToClassify[j].Score
 	})
-
-	capacity := &capacityTracker{
-		config:           &r.config.CapacityConfig,
-		componentCounter: map[string]int{},
-		componentPicks:   map[string]int{},
-		componentSkips:   map[string]int{},
-	}
 
 	// decide which pull requests we are going to pick based on the componentCounter
 	totalPicks := 0

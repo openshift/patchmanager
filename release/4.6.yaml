@@ -11,8 +11,12 @@ rules:
   labels:
     # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
     refuse:
-      - do-not-merge/hold
+      - do-not-merge/
       - needs-rebase
+    # 4.6 is limited to high & urgent backports
+    permitSeverity:
+      - high
+      - urgent
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   maxDefaultPicksPerComponent: 5
