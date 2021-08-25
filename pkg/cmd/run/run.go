@@ -272,10 +272,10 @@ func (r *runOptions) Run(ctx context.Context) error {
 	}
 
 	metrics := []componentMetric{}
-	for name, count := range capacity.componentCounter {
+	for name, _ := range capacity.componentCounter {
 		metrics = append(metrics, componentMetric{
 			Component: name,
-			Total:     count,
+			Total:     capacity.componentPicks[name] + capacity.componentSkips[name],
 			Picks:     capacity.componentPicks[name],
 			Skips:     capacity.componentSkips[name],
 		})
