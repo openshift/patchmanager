@@ -55,6 +55,12 @@ rules:
     # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
     refuse:
       - do-not-merge/hold
+      # This section can also be used to inform PRs that their bug severity is not high enough 
+      # for a given release branch. Here, by excluding lower severities, 
+      # only severity-high and severity-urgent will be permitted.
+      - bugzilla/severity-unspecified
+      - bugzilla/severity-low
+      - bugzilla/severity-medium
 # Classifiers describe how much score points a single pull request should get. (0-1)
 # Score impact the position of a PR in merge queue.
 classifiers:

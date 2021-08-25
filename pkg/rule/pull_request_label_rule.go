@@ -21,5 +21,8 @@ func (p *PullRequestLabelRule) Evaluate(pullRequest *github.PullRequest) ([]stri
 			}
 		}
 	}
+	if len(result) != 0 {
+		result = append(result, fmt.Sprintf("one or more labels has prevented approval; any of the following labels will preclude this PR from being approved: %v", p.Config.RefuseOnLabel))
+	}
 	return result, len(result) == 0
 }
