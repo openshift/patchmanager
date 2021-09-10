@@ -30,6 +30,22 @@ func NewPullRequestLister(ctx context.Context, ghToken string, bzToken string) *
 	}
 }
 
+func GetPullMetaFromURL(prURL string) (string, string) {
+	p := strings.Split(strings.TrimPrefix(prURL, "https://github.com/"), "/")
+	return p[0], p[1]
+}
+
+func (l *PullRequestLister) GetPullRequestStatus(ctx context.Context, p *PullRequest) ([]*github.RepoStatus, error) {
+	owner, repo := GetPullMetaFromURL(p.Issue.GetHTMLURL())
+	pr, _, err := l.ghClient.PullRequests.Get(ctx, owner, repo, p.Issue.GetNumber())
+	if err != nil {
+		return nil, err
+	}
+	prHeadSHA := pr.GetHead().GetSHA()
+	statuses, _, err := l.ghClient.Repositories.ListStatuses(ctx, owner, repo, prHeadSHA, &github.ListOptions{})
+	return statuses, err
+}
+
 func (l *PullRequestLister) ListForRelease(ctx context.Context, release, labels string) ([]*PullRequest, error) {
 	query := buildGithubSearchQuery(queryTemplate, release) + " " + labels
 	result, _, err := l.ghClient.Search.Issues(ctx, query, &github.SearchOptions{Sort: "updated", ListOptions: github.ListOptions{PerPage: 150}})
@@ -43,7 +59,7 @@ func (l *PullRequestLister) ListForRelease(ctx context.Context, release, labels 
 		}
 
 		newPullRequest := &PullRequest{
-			Issue: *result.Issues[i],
+			Issue: result.Issues[i],
 			Score: 0,
 		}
 		bugNumber := parseBugNumber(newPullRequest.Issue.GetTitle())

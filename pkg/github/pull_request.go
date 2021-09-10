@@ -6,7 +6,7 @@ import (
 )
 
 type PullRequest struct {
-	Issue github.Issue
+	Issue *github.Issue
 	Score float32
 
 	// do lazy fetch for bugs when needed to speed up sorting

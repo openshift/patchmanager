@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/openshift/patchmanager/pkg/config"
@@ -107,8 +108,9 @@ type approvedPull struct {
 }
 
 type pull struct {
-	URL    string `header:"URL"`
-	Status string `header:"Status"`
+	URL        string `header:"URL"`
+	Checks     string `header:"Checks"`
+	LastUpdate string `header:"Last Update"`
 }
 
 func colorizeDecision(d string) string {
@@ -162,20 +164,41 @@ func stringifyLabels(labels []*githubapi.Label) string {
 }
 
 func (r *listOptions) RunListApproved(ctx context.Context) error {
-	approved, err := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey).ListApprovedForRelease(ctx, r.release)
+	lister := github.NewPullRequestLister(ctx, r.githubToken, r.bugzillaAPIKey)
+	approved, err := lister.ListApprovedForRelease(ctx, r.release)
 	if err != nil {
 		return err
 	}
 	printer := tableprinter.New(os.Stdout)
 	out := []pull{}
 	for _, c := range approved {
+		statutes, err := lister.GetPullRequestStatus(ctx, c)
+		if err != nil {
+			owner, repo := github.GetPullMetaFromURL(c.Issue.GetHTMLURL())
+			klog.Warningf("WARNING: Unable to get status for %s/%s#%d: %v", owner, repo, c.Issue.GetNumber(), err)
+		} else {
+
+		}
 		out = append(out, pull{
-			URL:    c.Issue.GetHTMLURL(),
-			Status: fmt.Sprintf("lastUpdate=%v\nlabels=%s", humanize.Time(c.Issue.GetUpdatedAt()), stringifyLabels(c.Issue.Labels)),
+			URL:        c.Issue.GetHTMLURL(),
+			LastUpdate: humanize.Time(c.Issue.GetUpdatedAt()),
+			Checks:     statusToChecksString(statutes),
 		})
 	}
 	printer.Print(out)
 	return nil
+}
+
+func statusToChecksString(statutes []*githubapi.RepoStatus) string {
+	sort.Slice(statutes, func(i, j int) bool {
+		return statutes[i].GetCreatedAt().After(statutes[j].GetCreatedAt())
+	})
+	for _, s := range statutes {
+		if s.GetContext() == "tide" {
+			return fmt.Sprintf("%s", strings.TrimPrefix(s.GetDescription(), "Not mergeable. "))
+		}
+	}
+	return "no tide status reported yet"
 }
 
 func (r *listOptions) RunListCandidates(ctx context.Context) error {
@@ -187,8 +210,8 @@ func (r *listOptions) RunListCandidates(ctx context.Context) error {
 	out := []pull{}
 	for _, c := range candidates {
 		out = append(out, pull{
-			URL:    c.Issue.GetHTMLURL(),
-			Status: fmt.Sprintf("lastUpdate=%v", humanize.Time(c.Issue.GetUpdatedAt())),
+			URL:        c.Issue.GetHTMLURL(),
+			LastUpdate: humanize.Time(c.Issue.GetUpdatedAt()),
 		})
 	}
 	printer.Print(out)
