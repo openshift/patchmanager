@@ -24,6 +24,7 @@ github.com/enriquebris/goworkerpool
 ## explicit
 github.com/eparis/bugzilla
 # github.com/fatih/color v1.7.0
+## explicit
 github.com/fatih/color
 # github.com/go-logr/logr v0.2.0
 github.com/go-logr/logr
