@@ -21,5 +21,20 @@ func (p *PullRequestLabelRule) Evaluate(pullRequest *github.PullRequest) ([]stri
 			}
 		}
 	}
+
+	for _, c := range p.Config.RequireLabel {
+		found := false
+		for _, l := range pullRequest.Issue.Labels {
+			if strings.HasPrefix(l.GetName(), c) {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue
+		}
+		result = append(result, fmt.Sprintf("skipping because %q label was not found", c))
+	}
+
 	return result, len(result) == 0
 }

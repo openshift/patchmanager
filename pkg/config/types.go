@@ -26,6 +26,7 @@ type RulesConfig struct {
 
 type PullRequestLabelRuleConfig struct {
 	RefuseOnLabel []string `yaml:"refuse"`
+	RequireLabel  []string `yaml:"require"`
 }
 
 type KeywordsClassifierConfig map[string]float32

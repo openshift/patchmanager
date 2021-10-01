@@ -13,6 +13,8 @@ rules:
     refuse:
       - do-not-merge/hold
       - needs-rebase
+    require:
+      - backport-risk-assessed
 # Capacity describe the QE capacity for the "next" week per QE group.
 capacity:
   maxDefaultPicksPerComponent: 5
