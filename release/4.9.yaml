@@ -1,0 +1,195 @@
+---
+release: 4.9
+# MergeWindow describe a time window when pull requests can be cherry-picked for the z-stream.
+# Format is: YYYY-MM-DD
+mergeWindow:
+  from:
+  to:
+# Rules specify go/no-go rules to apply on every PR. These rules does not use classification/scoring, but make decisions directly
+# based on conditions
+rules:
+  labels:
+    # Refuse lists pull request label prefixes that when found the pull request will be automatically "skipped" (reason will be recorded)
+    refuse:
+      - do-not-merge/hold
+      - needs-rebase
+    require:
+      - backport-risk-assessed
+# Capacity describe the QE capacity for the "next" week per QE group.
+capacity:
+  maxDefaultPicksPerComponent: 5
+  maxTotalPicks: 50
+  groups:
+    - name: Apiserver and Auth
+      capacity: 7
+      components:
+      - apiserver-auth
+      - service-ca
+      - openshift-apiserver
+      - oauth-apiserver
+      - kube-apiserver
+      - oauth-proxy
+      - kube-storage-version-migrator
+      - config-operator
+    - name: Workloads
+      capacity: 5
+      components:
+      - oc
+      - kube-controller-manager
+      - kube-scheduler
+    - name: Etcd
+      capacity: 3
+      components:
+      - Etcd
+      - Etcd operator
+    - name: Container Engine Tools
+      capacity: 1
+      components:
+      - Containers
+    - name: Node
+      capacity: 5
+      components:
+      - Autoscaler
+      - CPU Manager
+      - CRI-O
+      - Kubelet
+      - Memory manager
+      - Numa aware scheduling
+      - POD resource API
+      - Topology manager
+    - name: Cluster Infrastructure
+      capacity: 6
+      components:
+      - Cloud Compute
+    - name: PSAP
+      capacity: 4
+      components:
+      - Special Resource Operator
+      - ISV Operators
+      - Node Feature Discovery Operator
+      - Node Tuning Operator
+    - name: SDN
+      capacity: 9
+      components:
+      - networking
+    - name: Network Edge
+      capacity: 3
+      components:
+      - routing
+      - dns
+    - name: Storage
+      capacity: 6
+      components:
+      - Storage
+    - name: Logging
+      capacity: 6
+      components:
+      - Logging
+    - name: Build API
+      capacity: 3
+      components:
+      - Build
+      - Openshift-controller-manager
+      - Samples
+      - Templates
+    - name: Admin Console
+      capacity: 8
+      components:
+      - Management Console
+      - Console Metal3 Plugin
+    - name: Cluster Observability
+      capacity: 8
+      components:
+      - Monitoring
+      - Telemeter
+    - name: Metering
+      capacity: 2
+      components:
+      - Metering Operator
+    - name: ISV Operators
+      capacity: 6
+      components:
+      - ISV Operators
+    - name: OLM
+      capacity: 8
+      components:
+      - OLM
+      - OperatorHub
+    - name: Operator SDK
+      capacity: 5
+      components:
+      - Operator SDK
+    - name: Image Registry
+      capacity: 3
+      components:
+      - Image Registry
+      - ImageStreams
+    - name: Cluster Operator
+      capacity: 3
+      components:
+      - Cloud Credential Operator
+      - Hive
+    - name: Installer
+      capacity: 8
+      components:
+      - Installer
+    - name: Over the Air
+      capacity: 3
+      components:
+      - Cluster Version Operator
+      - Openshift Update Service
+    - name: Windows Containers
+      capacity: 3
+      components:
+      - Windows Containers
+    - name: RHCOS
+      capacity: 1
+      components:
+      - RHCOS
+    - name: MCO
+      capacity: 1
+      components:
+      - Machine Config Operator
+    - name: Infrastructure Security and Compliance
+      capacity: 5
+      components:
+      - Compliance Operator
+      - File Integrity Operator
+rules:
+  labels:
+    refuse:
+      - do-not-merge/
+# Classifiers describe how much score points a single pull request should get. (0-1)
+# Score impact the position of a PR in merge queue.
+classifiers:
+  keywords:
+    "TestBlocker": 0.8
+    "UpgradeBlocker": 0.8
+    "ServiceDeliveryBlocker": 0.8
+    "Security": 0.5
+    "ServiceDeliveryImpact": 0.4
+    "FastFix": 1.0
+  components:
+    "authentication": 0.5
+    "networking": 0.5
+    "node": 0.5
+    "kube-apiserver": 0.5
+  severities:
+    "urgent": 1.0
+    "high": 0.5
+    "medium": 0.2
+    "low": 0.1
+    "unknown": -1.0
+  pmScores:
+    - from: 0
+      to: 30
+      score: 0
+    - from: 30
+      to: 50
+      score: 0.2
+    - from: 50
+      to: 100
+      score: 0.5
+    - from: 100
+      to: 999
+      score: 0.8
